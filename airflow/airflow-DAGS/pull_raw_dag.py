@@ -55,7 +55,7 @@ def pull_influx():
     print(influx_df)
     print(influx_df.columns)
     influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
-    influx_df.rename(columns = {"_time":"TimeStamp"})
+    influx_df.rename(columns = {"_time":"TimeStamp"},inplace=True)
     print(influx_df)
     client.close()
     data=influx_df.to_dict('records')
