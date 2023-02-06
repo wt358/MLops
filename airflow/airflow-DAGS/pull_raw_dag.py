@@ -158,7 +158,8 @@ def pull_transform():
             print(i)
     print(important_column2)
     
-    df=df[important_column2.append('_time')].dropna()
+    print(df)
+    df=df[important_column2+['_time']].dropna()
     print(df)
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
