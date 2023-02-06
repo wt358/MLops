@@ -114,7 +114,7 @@ def pull_transform():
     print(df.shape)
     print(df.columns)
     print(df)
-    df[1:].apply(pd.to_numeric,errors='coerce',inplace=True)
+    df[1:].apply(pd.to_numeric,errors='coerce')
     tmp = df.corr().abs()
     print(tmp)
     asdf = []
