@@ -51,12 +51,11 @@ def pull_influx():
     # print(result)
 
 
-    FILENAME = 'Weight.csv'
-
     influx_df =  query_api.query_data_frame(query=query)
     print(influx_df)
     print(influx_df.columns)
     influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
+    influx_df.rename(columns = {"_time":"TimeStamp"})
     print(influx_df)
     client.close()
     data=influx_df.to_dict('records')
@@ -68,7 +67,7 @@ def pull_influx():
     collection_test1 = db_test['weight_data']
     try:
         for row in data:
-            uniq=row['_time']
+            uniq=row['TimeStamp']
             result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
     except Exception as e:
         print("mongo connection failed")
