@@ -30,7 +30,7 @@ def pull_influx():
     token = Variable.get("INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("INFLUX_URL")
-    start_date="-20d"
+    start_date="-15d"
 
     client = influxdb_client.InfluxDBClient(
     url=url,
@@ -54,6 +54,7 @@ def pull_influx():
     FILENAME = 'Weight.csv'
 
     influx_df =  query_api.query_data_frame(query=query)
+    influx_df = influx_df.drop(influx_df[influx_df['All_Mold_Number']=="NaN"])
     print(influx_df)
     client.close()
     data=influx_df.to_dict('records')
