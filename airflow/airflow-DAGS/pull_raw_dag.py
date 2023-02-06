@@ -30,7 +30,7 @@ def pull_influx():
     token = Variable.get("INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("INFLUX_URL")
-
+    start_date="-20d"
 
     client = influxdb_client.InfluxDBClient(
     url=url,
@@ -42,7 +42,7 @@ def pull_influx():
 
     #
     query = f' from(bucket:"{bucket}")\
-    |> range(start: -24h)\
+    |> range(start: {start_date})\
     |> filter(fn:(r) => r._measurement == "NetworkInjectionMoldV1")\
     |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
     '
@@ -81,7 +81,7 @@ def pull_transform():
     client = MongoClient(host)
 
     db_test = client['coops2022']
-    collection_test1 = db_test['molding_data']
+    collection_test1 = db_test['weight_data']
     now = datetime.now()
     start = now - timedelta(days=3)
     print(start)
