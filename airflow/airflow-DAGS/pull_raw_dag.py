@@ -158,7 +158,7 @@ def pull_transform():
             print(i)
     print(important_column2)
     
-    df=df.set_index('_time')[important_column2].dropna()
+    df=df[important_column2+'_time'].dropna()
     print(df)
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
@@ -169,7 +169,7 @@ def pull_transform():
     # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
     try:
         for row in data:
-            uniq=row.index
+            uniq=row['_time']
             result = collection_aug.update_one({'idx':uniq},{"$set":row},upsert=True)
     except Exception as e: 
         print("mongo connection failed")
