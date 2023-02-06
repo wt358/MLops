@@ -87,9 +87,9 @@ def pull_transform():
     start = now - timedelta(days=30)
     print(start)
     query={
-            'idx':{
-                '$gt':f'{start}',
-                '$lt':f'{now}'
+            '_time':{
+                '$gt':start,
+                '$lt':now
                 }
             }
     try:
