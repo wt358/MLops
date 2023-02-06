@@ -8,6 +8,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.models.variable import Variable
 from airflow.utils.trigger_rule import TriggerRule
 
+from sklearn.preprocessing import StandardScaler
 
 import influxdb_client
 import csv
@@ -21,6 +22,8 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
+
+fromo pattern_extract import *
 
 # define funcs
 # 이제 여기서 15분마다 실행되게 하고, query find 할때 20분 레인지
@@ -101,34 +104,63 @@ def pull_transform():
     if df.empty:
         print("empty")
         return
-    df.drop(columns={'_id'},inplace=True)
+    df.drop(columns={'_id','result','_measurement','table','_start','_stop'},inplace=True)
 
     df=df.drop_duplicates(subset=["idx"])
-    df.drop(columns={'Mold_Temperature_1',
-        'Mold_Temperature_2',
-        'Mold_Temperature_3',
-        'Mold_Temperature_4',
-        'Mold_Temperature_5',
-        'Mold_Temperature_6',
-        'Mold_Temperature_7',
-        'Mold_Temperature_8',
-        'Mold_Temperature_9',
-        'Mold_Temperature_10',
-        'Mold_Temperature_11',
-        'Mold_Temperature_12',
-        'Hopper_Temperature',
-        'Cavity',
-        'NGmark',
-        },inplace=True)
-    df=df[df['idx']!='idx']
+    for i in df.columns:
+        print("컬럼: {:40s}, 크기: {}, Null: {}".format(i, df[i].shape, df[i].isnull().sum()))
+    
     print(df.shape)
     print(df.columns)
     print(df)
     
+    tmp = df.corr().abs()
+    
+    asdf = []
+    for i in df.columns[1:]:
+        corr_col = tmp[tmp[i] > 0.5][i]
+        if len(corr_col.index.tolist()) > 0: 
+            asdf.append(corr_col.drop(i))
+    
+    highly_correlated_columns = np.unique([j for i in asdf for j in i.index])
+    print(df[highly_correlated_columns].corr())
+    
+    scaler = StandardScaler()
+    df2 = pd.DataFrame(scaler.fit_transform(df[highly_correlated_columns].dropna()), columns = highly_correlated_columns)
+    
+    temp = pd.DataFrame([[i, df2[i].value_counts().shape[0]] for i in highly_correlated_columns if df2[i].value_counts().shape[0]]) 
+     # PV_Hold_Press_First_Time까지 cut (통계 기반 threshold를 구하는건 의미 없음)
+    print(temp.sort_values(by=1, ascending=False))
+    
+    important_column = temp[temp[1] >= 40][0].tolist()
+    print(important_column)
+    
+    for i in important_column:
+        try:
+            gwt = get_work_time(df[i], 0.25, 10, 10)
+            plt.figure(figsize=(16, 6))
+            df[i].plot(figsize=(15,5), title=i)
+            pd.concat([df[i].iloc[j[0]:j[1]] for j in gwt]).plot()
+        except:
+            print(i)
+    
+    important_column2 = []
+    gwts = []
+    for i in important_column:
+        try:
+            gwt = get_work_time(df[i], 0.25, 10, 10)
+            gwts.append(gwt)
+            important_column2.append(i)
+        except:
+            print(i)
+    print(important_column2)
+    
+    df=df.set_index('_time')[important_column2].dropna()
+    
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
 
-    db_test = client['coops2022_etl']
+    db_test = client['etl_data']
     collection_aug=db_test['etl_data']
     data=df.to_dict('records')
     # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
