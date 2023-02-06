@@ -114,7 +114,7 @@ def pull_transform():
     print(df.shape)
     print(df.columns)
     print(df)
-    df[:,1:]=df[:,1:].apply(pd.to_numeric,errors='coerce')
+    df.iloc[:,1:]=df.iloc[:,1:].apply(pd.to_numeric,errors='coerce')
     print(df)
     print(df.info())
     print(df.describe())
