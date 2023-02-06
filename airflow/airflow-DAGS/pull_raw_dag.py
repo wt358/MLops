@@ -54,6 +54,8 @@ def pull_influx():
     FILENAME = 'Weight.csv'
 
     influx_df =  query_api.query_data_frame(query=query)
+    print(influx_df)
+    print(influx_df.columns)
     influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
     print(influx_df)
     client.close()
