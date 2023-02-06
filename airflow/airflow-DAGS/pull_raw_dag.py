@@ -64,10 +64,14 @@ def pull_influx():
     db_test = client['coops2022']
     collection_test1 = db_test['weight_data']
     try:
-        result = collection_test1.insert_many(data)
-    except:
+        for row in data:
+            uniq=row['idx']
+            result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
+    except Exception as e:
         print("mongo connection failed")
+        print(e)
     client.close()
+    print("hello pull influx")
 
 def wait_kafka():
     time.sleep(30)
