@@ -117,7 +117,8 @@ def pull_transform():
     df.iloc[:,1:]=df.iloc[:,1:].apply(pd.to_numeric,errors='coerce')
     print(df)
     print(df.info())
-    print(df.describe())
+    for i in df.columns:
+        print("컬럼: {:40s}, 크기: {}, Null: {}".format(i, df[i].shape, df[i].isnull().sum()))
     tmp = df.corr().abs()
     print(tmp)
     asdf = []
@@ -170,7 +171,7 @@ def pull_transform():
     # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
     try:
         for row in data:
-            uniq=row['idx']
+            uniq=row['_time']
             result = collection_aug.update_one({'idx':uniq},{"$set":row},upsert=True)
     except Exception as e: 
         print("mongo connection failed")
