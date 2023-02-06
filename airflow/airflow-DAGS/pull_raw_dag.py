@@ -114,11 +114,9 @@ def pull_transform():
     print(df.shape)
     print(df.columns)
     print(df)
-    df.iloc[:,1:]=df.iloc[:,1:].apply(pd.to_numeric,errors='coerce')
+    df.loc[:,df.columns.drop('_time')]=df.loc[:,df.columns.drop('_time')].apply(pd.to_numeric,errors='coerce')
     print(df)
     print(df.info())
-    for i in df.columns:
-        print("컬럼: {:40s}, 크기: {}, Null: {}".format(i, df[i].shape, df[i].isnull().sum()))
     tmp = df.corr().abs()
     print(tmp)
     asdf = []
@@ -161,7 +159,7 @@ def pull_transform():
     print(important_column2)
     
     df=df.set_index('_time')[important_column2].dropna()
-    
+    print(df)
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
 
