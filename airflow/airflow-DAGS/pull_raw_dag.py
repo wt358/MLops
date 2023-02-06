@@ -104,18 +104,19 @@ def pull_transform():
     if df.empty:
         print("empty")
         return
-    df.drop(columns={'_id','result','_measurement','table','_start','_stop'},inplace=True)
+    df.drop(columns={'_id','_time','result','_measurement','table','_start','_stop'},inplace=True)
 
     df=df.drop_duplicates(subset=["idx"])
+    df.rename(columns={"idx":"_time"},inplace=True)
     for i in df.columns:
         print("컬럼: {:40s}, 크기: {}, Null: {}".format(i, df[i].shape, df[i].isnull().sum()))
     
     print(df.shape)
     print(df.columns)
     print(df)
-    
+    df[1:].apply(pd.to_numeric,errors='coerce',inplace=True)
     tmp = df.corr().abs()
-    
+    print(tmp)
     asdf = []
     for i in df.columns[1:]:
         corr_col = tmp[tmp[i] > 0.5][i]
