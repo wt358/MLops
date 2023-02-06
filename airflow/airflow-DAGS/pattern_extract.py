@@ -1,4 +1,5 @@
-
+import pandas as pd
+import numpy as np
 
 def get_work_time(target, q=0.5, L=30, in_a_row = 50):
     q_ = target.abs().quantile(q)
