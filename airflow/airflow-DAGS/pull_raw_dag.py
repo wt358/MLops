@@ -55,7 +55,6 @@ def pull_influx():
     print(influx_df)
     print(influx_df.columns)
     influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
-    influx_df.rename(columns = {"_time":"TimeStamp"},inplace=True)
     print(influx_df)
     client.close()
     data=influx_df.to_dict('records')
@@ -63,11 +62,11 @@ def pull_influx():
     client = MongoClient(host)
 
 
-    db_test = client['coops2022']
-    collection_test1 = db_test['weight_data']
+    db_test = client['raw_data']
+    collection_test1 = db_test['network_mold_data']
     try:
         for row in data:
-            uniq=row['TimeStamp']
+            uniq=row['_time']
             result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
     except Exception as e:
         print("mongo connection failed")
@@ -82,13 +81,13 @@ def pull_transform():
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
 
-    db_test = client['coops2022']
-    collection_test1 = db_test['weight_data']
+    db_test = client['raw_data']
+    collection_test1 = db_test['network_mold_data']
     now = datetime.now()
     start = now - timedelta(days=30)
     print(start)
     query={
-            'TimeStamp':{
+            'idx':{
                 '$gt':f'{start}',
                 '$lt':f'{now}'
                 }
