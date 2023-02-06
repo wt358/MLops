@@ -23,7 +23,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
 
-fromo pattern_extract import *
+from pattern_extract import *
 
 # define funcs
 # 이제 여기서 15분마다 실행되게 하고, query find 할때 20분 레인지
