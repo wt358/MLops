@@ -117,48 +117,57 @@ def pull_transform():
     df.loc[:,df.columns.drop('_time')]=df.loc[:,df.columns.drop('_time')].apply(pd.to_numeric,errors='coerce')
     print(df)
     print(df.info())
-    tmp = df.corr().abs()
-    print(tmp)
-    asdf = []
-    for i in df.columns[1:]:
-        corr_col = tmp[tmp[i] > 0.5][i]
-        if len(corr_col.index.tolist()) > 0: 
-            asdf.append(corr_col.drop(i))
+    # tmp = df.corr().abs()
+    # print(tmp)
+    # asdf = []
+    # for i in df.columns[1:]:
+    #     corr_col = tmp[tmp[i] > 0.5][i]
+    #     if len(corr_col.index.tolist()) > 0: 
+    #         asdf.append(corr_col.drop(i))
     
-    highly_correlated_columns = np.unique([j for i in asdf for j in i.index])
-    print(df[highly_correlated_columns].corr())
+    # highly_correlated_columns = np.unique([j for i in asdf for j in i.index])
+    # print(df[highly_correlated_columns].corr())
     
-    scaler = StandardScaler()
-    df2 = pd.DataFrame(scaler.fit_transform(df[highly_correlated_columns].dropna()), columns = highly_correlated_columns)
+    # scaler = StandardScaler()
+    # df2 = pd.DataFrame(scaler.fit_transform(df[highly_correlated_columns].dropna()), columns = highly_correlated_columns)
     
-    temp = pd.DataFrame([[i, df2[i].value_counts().shape[0]] for i in highly_correlated_columns if df2[i].value_counts().shape[0]]) 
+    # temp = pd.DataFrame([[i, df2[i].value_counts().shape[0]] for i in highly_correlated_columns if df2[i].value_counts().shape[0]]) 
      # PV_Hold_Press_First_Time까지 cut (통계 기반 threshold를 구하는건 의미 없음)
-    print(temp.sort_values(by=1, ascending=False))
+    # print(temp.sort_values(by=1, ascending=False))
     
-    important_column = temp[temp[1] >= 40][0].tolist()
-    print(important_column)
+    # important_column = temp[temp[1] >= 40][0].tolist()
+    # print(important_column)
     
-    for i in important_column:
-        try:
-            gwt = get_work_time(df[i], 0.25, 10, 10)
-            plt.figure(figsize=(16, 6))
-            df[i].plot(figsize=(15,5), title=i)
-            pd.concat([df[i].iloc[j[0]:j[1]] for j in gwt]).plot()
-        except:
-            print(i)
+    # for i in important_column:
+    #     try:
+    #         gwt = get_work_time(df[i], 0.25, 10, 10)
+    #         plt.figure(figsize=(16, 6))
+    #         df[i].plot(figsize=(15,5), title=i)
+    #         pd.concat([df[i].iloc[j[0]:j[1]] for j in gwt]).plot()
+    #     except:
+    #         print(i)
     
-    important_column2 = []
-    gwts = []
-    for i in important_column:
-        try:
-            gwt = get_work_time(df[i], 0.25, 10, 10)
-            gwts.append(gwt)
-            important_column2.append(i)
-        except:
-            print(i)
-    print(important_column2)
+    # important_column2 = []
+    # gwts = []
+    # for i in important_column:
+    #     try:
+    #         gwt = get_work_time(df[i], 0.25, 10, 10)
+    #         gwts.append(gwt)
+    #         important_column2.append(i)
+    #     except:
+    #         print(i)
+    # print(important_column2)
     
-    print(df)
+    # print(df)
+    important_column2=['All_Mold_Number',
+        'Injection_Time',
+        'Machine_Process_Time',
+        'PV_Cooling_Time',
+        'PV_Penalty_Neglect_Monitoring',
+        'Product_Process_Time',
+        'Reservation_Mold_Number',
+        'Screw_Position',
+        'Weighing_Speed']
     df=df[important_column2+['_time']].dropna()
     print(df)
     host = Variable.get("MONGO_URL_SECRET")

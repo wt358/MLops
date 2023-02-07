@@ -4,7 +4,7 @@ TAG=$1
 message=$2
 
 docker images
-docker build -t ctf-mlops.kr.ncr.ntruss.com/cuda:$TAG -f ./Dockerfile/gpu-Dockerfile ./Dockerfile/
+docker build -t ctf-mlops.kr.ncr.ntruss.com/cuda:$TAG -f ./Dockerfile/gpu-Dockerfile ./
 docker push ctf-mlops.kr.ncr.ntruss.com/cuda:$TAG
 
 git add .
