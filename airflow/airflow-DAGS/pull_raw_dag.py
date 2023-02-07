@@ -175,7 +175,7 @@ def pull_transform():
     today=datetime.now().strftime("%Y-%m-%d")
     db_test = client['etl_data']
     factory_name='teng'
-    collection_aug=db_test[f'{factory_name}_{today}']
+    collection_aug=db_test[f'etl_{factory_name}']
     data=df.to_dict('records')
     # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
     try:
