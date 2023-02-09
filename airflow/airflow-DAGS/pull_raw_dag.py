@@ -33,7 +33,7 @@ def pull_influx():
     token = Variable.get("INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("INFLUX_URL")
-    start_date="-40d"
+    start_date="-70d"
 
     client = influxdb_client.InfluxDBClient(
     url=url,
