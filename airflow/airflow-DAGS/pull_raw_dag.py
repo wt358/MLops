@@ -33,7 +33,7 @@ def pull_influx():
     token = Variable.get("INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("INFLUX_URL")
-    start_date="-70d"
+    start_date="-40d"
 
     client = influxdb_client.InfluxDBClient(
     url=url,
@@ -47,7 +47,7 @@ def pull_influx():
     query = f' from(bucket:"{bucket}")\
     |> range(start: {start_date})\
     |> filter(fn:(r) => r._measurement == "NetworkInjectionMoldV1")\
-    |> filter(fn:(r) => r._field== "_measurement")\
+    |> filter(fn:(r) => r._field!= "_measurement")\
     |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
     '
     #|> range(start: -2mo)
