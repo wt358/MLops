@@ -20,7 +20,7 @@ from pymongo import MongoClient
 import pandas as pd
 
 
-dag_id = 'kubernetes-dag'
+dag_id = 'learning-dag'
 
 task_default_args = {
         'owner': 'coops2',
@@ -76,18 +76,18 @@ secret_volume = Secret(
         secret='db-secret-ggd7k5tgg2',
         # Key in the form of service account file name
         key='mongo-url-secret.json')
-secret_all = Secret('env', None, 'db-secret-ggd7k5tgg2')
-secret_all1 = Secret('env', None, 'airflow-cluster-config-envs')
-secret_all2 = Secret('env', None, 'airflow-cluster-db-migrations')
-secret_all3 = Secret('env', None, 'airflow-cluster-pgbouncer')
-secret_all4 = Secret('env', None, 'airflow-cluster-pgbouncer-certs')
-secret_all5 = Secret('env', None, 'airflow-cluster-postgresql')
-secret_all6 = Secret('env', None, 'airflow-cluster-sync-users')
-secret_all7 = Secret('env', None, 'airflow-cluster-token-8qgp2')
-secret_all8 = Secret('env', None, 'airflow-cluster-webserver-config')
-secret_all9 = Secret('env', None, 'airflow-git-ssh-secret2')
-secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
-secret_allb = Secret('env', None, 'default-token-hkdgr')
+# secret_all = Secret('env', None, 'db-secret-ggd7k5tgg2')
+# secret_all1 = Secret('env', None, 'airflow-cluster-config-envs')
+# secret_all2 = Secret('env', None, 'airflow-cluster-db-migrations')
+# secret_all3 = Secret('env', None, 'airflow-cluster-pgbouncer')
+# secret_all4 = Secret('env', None, 'airflow-cluster-pgbouncer-certs')
+# secret_all5 = Secret('env', None, 'airflow-cluster-postgresql')
+# secret_all6 = Secret('env', None, 'airflow-cluster-sync-users')
+# secret_all7 = Secret('env', None, 'airflow-cluster-token-8qgp2')
+# secret_all8 = Secret('env', None, 'airflow-cluster-webserver-config')
+# secret_all9 = Secret('env', None, 'airflow-git-ssh-secret2')
+# secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
+# secret_allb = Secret('env', None, 'default-token-hkdgr')
 
 
 
@@ -111,7 +111,7 @@ gpu_aff={
                         # The label key's value that pods can be scheduled
                         # on.
                         'values': [
-                            'pseudo-gpu-w-1yz7',
+                            'pseudo-gpu-w-2bsh',
                             #'pool-1',
                             ]
                         }]
@@ -127,8 +127,8 @@ cpu_aff={
                         'key': 'kubernetes.io/hostname',
                         'operator': 'In',
                         'values': [
-                            'high-memory-w-1ih9',
-                            'high-memory-w-1iha',
+                            'high-memory-w-23op',
+                            'high-memory-w-23oq',
                             ]
                         }]
                     }]
@@ -144,8 +144,8 @@ def print_rank(df,i,machine_no):
     today=datetime.now().strftime("%Y-%m-%d")
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
-    db_rank= client['coops2022_rank']
-    collection = db_rank[f'rank_{machine_no}_{i}_{today}']
+    db_rank= client['rank']
+    collection = db_rank[f'teng_{machine_no}_{i}_{today}']
 
     df2=df[df['TimeStamp'] > date_1month ]['Additional_Info_1'].value_counts()
     df1=df2.rank(method='min',ascending=False)
@@ -169,56 +169,52 @@ def which_path():
   '''
   return the task_id which to be executed
   '''
-  host = Variable.get("MS_HOST")
-  database = Variable.get("MS_DATABASE")
-  username = Variable.get("MS_USERNAME")
-  password = Variable.get("MS_PASSWORD")
+#   host = Variable.get("MS_HOST")
+#   database = Variable.get("MS_DATABASE")
+#   username = Variable.get("MS_USERNAME")
+#   password = Variable.get("MS_PASSWORD")
 
-  query = text(
-      "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(day,-7,GETDATE())"
-      )
-  query1 = text(
-      "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(month,-6,GETDATE())"
-      )
-  conection_url = sqlalchemy.engine.url.URL(
-      drivername="mssql+pymssql",
-      username=username,
-      password=password,
-      host=host,
-      database=database,
-  )
-  engine = create_engine(conection_url, echo=True)
+#   query = text(
+#       "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(day,-7,GETDATE())"
+#       )
+#   query1 = text(
+#       "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(month,-6,GETDATE())"
+#       )
+#   conection_url = sqlalchemy.engine.url.URL(
+#       drivername="mssql+pymssql",
+#       username=username,
+#       password=password,
+#       host=host,
+#       database=database,
+#   )
+#   engine = create_engine(conection_url, echo=True)
   
-  sql_result_pd = pd.read_sql_query(query, engine)
-  mode_machine_name=sql_result_pd['Additional_Info_1'].value_counts().idxmax()
-  print(sql_result_pd['Additional_Info_1'].value_counts())
-  print(mode_machine_name)
+#   sql_result_pd = pd.read_sql_query(query, engine)
+#   mode_machine_name=sql_result_pd['Additional_Info_1'].value_counts().idxmax()
+#   print(sql_result_pd['Additional_Info_1'].value_counts())
+#   print(mode_machine_name)
   
-  sql_result = engine.execute(query1)
-  sql_result_pd = pd.read_sql_query(query1, engine)
+#   sql_result = engine.execute(query1)
+#   sql_result_pd = pd.read_sql_query(query1, engine)
 
-  sql_result_pd = sql_result_pd[sql_result_pd['Machine_Name'] != '7']
-  sql_result_pd = sql_result_pd[sql_result_pd['Machine_Name'] != '6i']
-  sql_result_pd_6 = sql_result_pd[sql_result_pd['Machine_Name'] != '']
-  sql_result_pd_25 = sql_result_pd[sql_result_pd['Machine_Name'] == '']
-#   month_list = [1, 3, 6]
-  month_list = [6]
-  print("======================================================")
-  print("  6호기")
-  for i in month_list:
-      print_rank(sql_result_pd_6, i,6)
-  print("======================================================")
-  print("  25호기")
-  for i in month_list:
-      print_rank(sql_result_pd_25, i,25)
-  print("======================================================")
-
-
-
-  
+#   sql_result_pd = sql_result_pd[sql_result_pd['Machine_Name'] != '7']
+#   sql_result_pd = sql_result_pd[sql_result_pd['Machine_Name'] != '6i']
+#   sql_result_pd_6 = sql_result_pd[sql_result_pd['Machine_Name'] != '']
+#   sql_result_pd_25 = sql_result_pd[sql_result_pd['Machine_Name'] == '']
+# #   month_list = [1, 3, 6]
+#   month_list = [6]
+#   print("======================================================")
+#   print("  6호기")
+#   for i in month_list:
+#       print_rank(sql_result_pd_6, i,6)
+#   print("======================================================")
+#   print("  25호기")
+#   for i in month_list:
+#       print_rank(sql_result_pd_25, i,25)
+#   print("======================================================")
   
 #   if '9000a' in mode_machine_name:
-  if False:
+  if True:
     task_id = 'path_main'
   else:
     task_id = 'path_vari'
@@ -230,7 +226,7 @@ run_iqr = KubernetesPodOperator(
         task_id="iqr_gan_pod_operator",
         name="iqr-gan",
         namespace='airflow-cluster',
-        image='wcu5i9i6.kr.private-ncr.ntruss.com/cuda:0.81',
+        image='ctf-mlops.kr.private-ncr.ntruss.com/cuda:0.81',
         #image_pull_policy="Always",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
         cmds=["python3" ],
@@ -249,7 +245,7 @@ run_lstm = KubernetesPodOperator(
         task_id="lstm_pod_operator",
         name="lstm-auto-encoder",
         namespace='airflow-cluster',
-        image='wcu5i9i6.kr.private-ncr.ntruss.com/cuda:0.81',
+        image='ctf-mlops.kr.private-ncr.ntruss.com/cuda:0.81',
         #image_pull_policy="Always",
         #image_pull_policy="IfNotPresent",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
@@ -268,7 +264,7 @@ run_tadgan = KubernetesPodOperator(
         task_id="tad_pod_operator",
         name="tad-gan",
         namespace='airflow-cluster',
-        image='wcu5i9i6.kr.private-ncr.ntruss.com/tad:0.01',
+        image='ctf-mlops.kr.private-ncr.ntruss.com/tad:0.01',
         #image_pull_policy="Always",
         #image_pull_policy="IfNotPresent",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
@@ -287,7 +283,7 @@ run_svm = KubernetesPodOperator(
         task_id="oc_svm_pod_operator",
         name="oc-svm",
         namespace='airflow-cluster',
-        image='wcu5i9i6.kr.private-ncr.ntruss.com/cuda:0.81',
+        image='ctf-mlops.kr.private-ncr.ntruss.com/cuda:0.81',
         #image_pull_policy="Always",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
         secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8, secret_all9, secret_alla, secret_allb ],
@@ -302,7 +298,7 @@ run_eval = KubernetesPodOperator(
         task_id="eval_pod_operator",
         name="data-eval",
         namespace='airflow-cluster',
-        image='wcu5i9i6.kr.private-ncr.ntruss.com/cuda:0.81',
+        image='ctf-mlops.kr.private-ncr.ntruss.com/cuda:0.81',
         #image_pull_policy="Always",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
         secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8, secret_all9, secret_alla, secret_allb ],

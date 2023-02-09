@@ -47,6 +47,7 @@ def pull_influx():
     query = f' from(bucket:"{bucket}")\
     |> range(start: {start_date})\
     |> filter(fn:(r) => r._measurement == "NetworkInjectionMoldV1")\
+    |> filter(fn:(r) => r._field== "_measurement")\
     |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
     '
     #|> range(start: -2mo)
