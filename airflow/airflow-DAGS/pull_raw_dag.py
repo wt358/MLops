@@ -33,7 +33,7 @@ def pull_influx():
     token = Variable.get("INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("INFLUX_URL")
-    start_date="-40d"
+    start_date="-200d"
 
     client = influxdb_client.InfluxDBClient(
     url=url,
@@ -58,6 +58,9 @@ def pull_influx():
     influx_df =  query_api.query_data_frame(query=query)
     print(influx_df)
     print(influx_df.columns)
+    if len(influx_df) < 1:
+        client.close()
+        return 0
     influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
     print(influx_df)
     client.close()
