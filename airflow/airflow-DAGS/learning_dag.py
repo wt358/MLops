@@ -19,6 +19,8 @@ from sqlalchemy.sql import text
 from pymongo import MongoClient
 import pandas as pd
 
+gpu_tag='0.01'
+tad_tag='0.01'
 
 dag_id = 'learning-dag'
 
@@ -65,7 +67,7 @@ secret_env = Secret(
         # than `volume`.
         deploy_target='MONGO_URL_SECRET',
         # Name of the Kubernetes Secret
-        secret='db-secret-ggd7k5tgg2',
+        secret='db-secret-g2ch4c78cf',
         # Key of a secret stored in this Secret object
         key='MONGO_URL_SECRET')
 secret_volume = Secret(
@@ -73,21 +75,20 @@ secret_volume = Secret(
         # Path where we mount the secret as volume
         deploy_target='/var/secrets/db',
         # Name of Kubernetes Secret
-        secret='db-secret-ggd7k5tgg2',
+        secret='db-secret-g2ch4c78cf',
         # Key in the form of service account file name
         key='mongo-url-secret.json')
-# secret_all = Secret('env', None, 'db-secret-ggd7k5tgg2')
-# secret_all1 = Secret('env', None, 'airflow-cluster-config-envs')
-# secret_all2 = Secret('env', None, 'airflow-cluster-db-migrations')
-# secret_all3 = Secret('env', None, 'airflow-cluster-pgbouncer')
-# secret_all4 = Secret('env', None, 'airflow-cluster-pgbouncer-certs')
-# secret_all5 = Secret('env', None, 'airflow-cluster-postgresql')
-# secret_all6 = Secret('env', None, 'airflow-cluster-sync-users')
-# secret_all7 = Secret('env', None, 'airflow-cluster-token-8qgp2')
-# secret_all8 = Secret('env', None, 'airflow-cluster-webserver-config')
-# secret_all9 = Secret('env', None, 'airflow-git-ssh-secret2')
-# secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
-# secret_allb = Secret('env', None, 'default-token-hkdgr')
+secret_all = Secret('env', None, 'db-secret-g2ch4c78cf')
+secret_all1 = Secret('env', None, 'airflow-cluster-config-envs')
+secret_all2 = Secret('env', None, 'airflow-cluster-db-migrations')
+secret_all3 = Secret('env', None, 'airflow-cluster-pgbouncer')
+secret_all4 = Secret('env', None, 'airflow-cluster-pgbouncer-certs')
+secret_all5 = Secret('env', None, 'airflow-cluster-postgresql')
+secret_all6 = Secret('env', None, 'airflow-cluster-sync-users')
+secret_all7 = Secret('env', None, 'airflow-cluster-token-7wptr')
+secret_all8 = Secret('env', None, 'airflow-cluster-webserver-config')
+secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
+secret_allb = Secret('env', None, 'default-token-8d2dz')
 
 
 
@@ -226,14 +227,14 @@ run_iqr = KubernetesPodOperator(
         task_id="iqr_gan_pod_operator",
         name="iqr-gan",
         namespace='airflow-cluster',
-        image='ctf-mlops.kr.private-ncr.ntruss.com/cuda:0.81',
+        image=f'ctf-mlops.kr.private-ncr.ntruss.com/cuda:{gpu_tag}',
         #image_pull_policy="Always",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
         cmds=["python3" ],
         arguments=["copy_gpu_py.py", "iqr"],
         affinity=gpu_aff,
         #resources=pod_resources,
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8, secret_all9, secret_alla, secret_allb ],
+        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
         #env_vars={'MONGO_URL_SECRET':'{{var.value.MONGO_URL_SECRET}}'},
         #configmaps=configmaps,
         is_delete_operator_pod=True,
@@ -245,7 +246,7 @@ run_lstm = KubernetesPodOperator(
         task_id="lstm_pod_operator",
         name="lstm-auto-encoder",
         namespace='airflow-cluster',
-        image='ctf-mlops.kr.private-ncr.ntruss.com/cuda:0.81',
+        image=f'ctf-mlops.kr.private-ncr.ntruss.com/cuda:{gpu_tag}',
         #image_pull_policy="Always",
         #image_pull_policy="IfNotPresent",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
@@ -253,7 +254,7 @@ run_lstm = KubernetesPodOperator(
         arguments=["copy_gpu_py.py", "lstm"],
         affinity=gpu_aff,
         #resources=pod_resources,
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8, secret_all9, secret_alla, secret_allb ],
+        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
         #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
         #configmaps=configmaps,
         is_delete_operator_pod=True,
@@ -264,7 +265,7 @@ run_tadgan = KubernetesPodOperator(
         task_id="tad_pod_operator",
         name="tad-gan",
         namespace='airflow-cluster',
-        image='ctf-mlops.kr.private-ncr.ntruss.com/tad:0.01',
+        image=f'ctf-mlops.kr.private-ncr.ntruss.com/tad:{tad_tag}',
         #image_pull_policy="Always",
         #image_pull_policy="IfNotPresent",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
@@ -272,7 +273,7 @@ run_tadgan = KubernetesPodOperator(
         arguments=["copy_gpu_py.py", "tad_gan"],
         affinity=gpu_aff,
         #resources=pod_resources,
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8, secret_all9, secret_alla, secret_allb ],
+        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
         #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
         #configmaps=configmaps,
         is_delete_operator_pod=True,
@@ -283,10 +284,10 @@ run_svm = KubernetesPodOperator(
         task_id="oc_svm_pod_operator",
         name="oc-svm",
         namespace='airflow-cluster',
-        image='ctf-mlops.kr.private-ncr.ntruss.com/cuda:0.81',
+        image=f'ctf-mlops.kr.private-ncr.ntruss.com/cuda:{gpu_tag}',
         #image_pull_policy="Always",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8, secret_all9, secret_alla, secret_allb ],
+        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
         cmds=["python3","copy_gpu_py.py" ],
         arguments=["oc_svm"],
         affinity=cpu_aff,
@@ -298,10 +299,10 @@ run_eval = KubernetesPodOperator(
         task_id="eval_pod_operator",
         name="data-eval",
         namespace='airflow-cluster',
-        image='ctf-mlops.kr.private-ncr.ntruss.com/cuda:0.81',
+        image=f'ctf-mlops.kr.private-ncr.ntruss.com/cuda:{gpu_tag}',
         #image_pull_policy="Always",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8, secret_all9, secret_alla, secret_allb ],
+        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
         cmds=["python3","copy_gpu_py.py" ],
         arguments=["eval"],
         affinity=cpu_aff,

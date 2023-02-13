@@ -120,9 +120,9 @@ def iqr_mds_gan():
     now = datetime.now()
     curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
 
-    consumer = KafkaConsumer('test.coops2022_etl.etl_data',
-            group_id=f'airflow_{curr_time}',
-            bootstrap_servers=['kafka-clust-kafka-persis-d198b-11683092-d3d89e335b84.kr.lb.naverncp.com:9094'],
+    consumer = KafkaConsumer('etl.etl_data.test_teng',
+            group_id=f'iqr_{curr_time}',
+            bootstrap_servers=['kafka-clust-kafka-persis-cc65d-15588214-38845b0307b9.kr.lb.naverncp.com:9094'],
             value_deserializer=lambda x: loads(x.decode('utf-8')),
             auto_offset_reset='earliest',
             consumer_timeout_ms=10000
@@ -147,17 +147,19 @@ def iqr_mds_gan():
     print(df.columns)
     print(df)
 
-    df=df[df['Additional_Info_1'].str.contains("9000a")]
     df.drop(columns={'_id',
         },inplace=True)
 
-    df=df[['idx', 'Machine_Name','Additional_Info_1', 'Additional_Info_2','Shot_Number','TimeStamp',
-            'Average_Back_Pressure', 'Average_Screw_RPM', 'Clamp_Close_Time',
-            'Clamp_Open_Position', 'Cushion_Position', 'Cycle_Time', 'Filling_Time',
-            'Injection_Time', 'Plasticizing_Position',
-            'Plasticizing_Time', 'Switch_Over_Position',
+    df['TimeStamp']=df['TimeStamp'].apply(lambda x : x['$date'])
+    df['TimeStamp']=df['TimeStamp'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
+    df['idx']=df['idx'].apply(lambda x : x['$date'])
+    df=df[['idx', 'TimeStamp',
+            'All_Mold_Number', 'Injection_Time', 'Machine_Process_Time',
+            'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring', 'Product_Process_Time', 'Reservation_Mold_Number',
+            'Screw_Position', 'Weighing_Speed',
             ]]
-    #IQR
+
+        #IQR
     print(df)
     print(df.dtypes)
     
