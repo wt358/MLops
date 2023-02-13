@@ -468,8 +468,8 @@ def lstm_autoencoder():
     host = os.environ['MONGO_URL_SECRET'] 
     client = MongoClient(host)
     
-    db_test = client['coops2022_aug']
-    collection_aug=db_test['mongo_aug1']
+    db_test = client['aug_data']
+    collection_aug=db_test['aug_test_teng']
     
     try:
         moldset_df = pd.DataFrame(list(collection_aug.find()))
@@ -482,8 +482,10 @@ def lstm_autoencoder():
 
     outlier = moldset_df[moldset_df.Class == 1]
     print(outlier.head())
-    labled = pd.DataFrame(moldset_df, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position','Class'])
 
+    important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
+    labled = pd.DataFrame(moldset_df, columns = important_columns)
+    
     labled.columns = map(str.lower,labled.columns)
     labled.rename(columns={'class':'label'},inplace=True)
     print(labled.head()) 
@@ -543,9 +545,9 @@ def lstm_autoencoder():
         print("Test data shape:", X_test.shape)
        
         #scaler and lstm autoencoder model save
-        db_model = client['coops2022_model']
+        db_model = client['model_var']
         fs = gridfs.GridFS(db_model)
-        collection_model=db_model['mongo_scaler_lstm']
+        collection_model=db_model['scaler_lstm_teng']
        
         model_fpath = f'{scaler_filename}.joblib'
         joblib.dump(scaler, model_fpath)
@@ -566,7 +568,7 @@ def lstm_autoencoder():
 
 
         # load the model
-        collection_model=db_model['mongo_LSTM_autoencoder']
+        collection_model=db_model['LSTM_autoencoder_teng']
         
         model_name = 'LSTM_autoencoder'
         model_fpath = f'{model_name}.joblib'
@@ -574,8 +576,8 @@ def lstm_autoencoder():
         print(result)
         cnt=len(list(result.clone()))
         print(cnt)
-        print(result[0])
-        print(result[cnt-1])
+        # print(result[0])
+        # print(result[cnt-1])
         try:
             file_id = str(result[0]['file_id'])
             model = LoadModel(mongo_id=file_id).clf
@@ -603,11 +605,11 @@ def lstm_autoencoder():
         Xtrain = X_train.reshape(X_train.shape[0], X_train.shape[2])
         scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtrain), axis = 1)
 
-        plt.figure(figsize=(16,9), dpi=80)
-        plt.title('Loss Distribution', fontsize=16)
-        sns.distplot(scored['Loss_mae'], bins = 20, kde= True, color = 'blue');
-        plt.xlim([0.0,.5])
-        plt.show()
+        # plt.figure(figsize=(16,9), dpi=80)
+        # plt.title('Loss Distribution', fontsize=16)
+        # sns.distplot(scored['Loss_mae'], bins = 20, kde= True, color = 'blue');
+        # plt.xlim([0.0,.5])
+        # plt.show()
 
 
         # calculate the loss on the test set
@@ -649,9 +651,9 @@ def lstm_autoencoder():
         print(roc_auc_score(outliers, y_test))
     
     
-        db_model = client['coops2022_model']
+        db_model = client['model_var']
         fs = gridfs.GridFS(db_model)
-        collection_model=db_model['mongo_LSTM_autoencoder']
+        collection_model=db_model['LSTM_autoencoder_teng']
        
         model_name = 'LSTM_autoencoder'
         model_fpath = f'{model_name}.joblib'
