@@ -67,7 +67,7 @@ secret_env = Secret(
         # than `volume`.
         deploy_target='MONGO_URL_SECRET',
         # Name of the Kubernetes Secret
-        secret='db-secret-g2ch4c78cf',
+        secret='db-secret-hk8b2hk77m',
         # Key of a secret stored in this Secret object
         key='MONGO_URL_SECRET')
 secret_volume = Secret(
@@ -75,10 +75,10 @@ secret_volume = Secret(
         # Path where we mount the secret as volume
         deploy_target='/var/secrets/db',
         # Name of Kubernetes Secret
-        secret='db-secret-g2ch4c78cf',
+        secret='db-secret-hk8b2hk77m',
         # Key in the form of service account file name
         key='mongo-url-secret.json')
-secret_all = Secret('env', None, 'db-secret-g2ch4c78cf')
+secret_all = Secret('env', None, 'db-secret-hk8b2hk77m')
 secret_all1 = Secret('env', None, 'airflow-cluster-config-envs')
 secret_all2 = Secret('env', None, 'airflow-cluster-db-migrations')
 secret_all3 = Secret('env', None, 'airflow-cluster-pgbouncer')
