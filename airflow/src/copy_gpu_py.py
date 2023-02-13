@@ -345,8 +345,8 @@ def oc_svm():
     host = os.environ['MONGO_URL_SECRET'] 
     client = MongoClient(host)
     
-    db_test = client['coops2022_aug']
-    collection_aug=db_test['mongo_aug1']
+    db_test = client['aug_data']
+    collection_aug=db_test['aug_test_teng']
     
     try:
         moldset_df = pd.DataFrame(list(collection_aug.find()))
@@ -358,27 +358,29 @@ def oc_svm():
     print(moldset_df)
 
     moldset_9000R=moldset_df
+    important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
     
 
-    labled = pd.DataFrame(moldset_9000R, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position','Class'])
+    labled = pd.DataFrame(moldset_9000R, columns = important_columns)
     labled.columns = map(str.lower,labled.columns)
     labled.rename(columns={'class':'label'},inplace=True)
     print(labled.head())
+    important_columns.remove('Class')
+    target_columns = pd.DataFrame(labled, columns = map(str.lower,important_columns))
 
-    target_columns = pd.DataFrame(labled, columns = ['cycle_time', 'cushion_position'])
     target_columns.astype('float')
      
-    db_model = client['coops2022_model']
+    db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
-    collection_model=db_model['mongo_OCSVM']
+    collection_model=db_model['OCSVM_teng']
     
     model_name = 'OC_SVM'
     model_fpath = f'{model_name}.joblib'
     result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
     print(result)
     cnt=len(list(result.clone()))
-    print(result[0])
-    print(result[cnt-1])
+    # print(result[0])
+    # print(result[cnt-1])
     try:
         file_id = str(result[0]['file_id'])
         model = LoadModel(mongo_id=file_id).clf
