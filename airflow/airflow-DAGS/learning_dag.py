@@ -19,7 +19,7 @@ from sqlalchemy.sql import text
 from pymongo import MongoClient
 import pandas as pd
 
-gpu_tag='0.01'
+gpu_tag='0.02'
 tad_tag='0.01'
 
 dag_id = 'learning-dag'

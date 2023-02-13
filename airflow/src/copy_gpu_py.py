@@ -149,7 +149,7 @@ def iqr_mds_gan():
 
     df.drop(columns={'_id',
         },inplace=True)
-
+    df.rename(columns={'_time':'TimeStamp'},inplace=True)
     df['TimeStamp']=df['TimeStamp'].apply(lambda x : x['$date'])
     df['TimeStamp']=df['TimeStamp'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
     df['idx']=df['idx'].apply(lambda x : x['$date'])
