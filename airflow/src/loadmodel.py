@@ -33,7 +33,7 @@ class LoadModel(metaclass=ModelSingleton):
        host = os.environ['MONGO_URL_SECRET'] 
        client = MongoClient(host)
 
-       db_model = client['coops2022_model']
+       db_model = client['model_var']
        fs = gridfs.GridFS(db_model)
        print(self.mongo_id)
        f = fs.find({"_id": ObjectId(self.mongo_id)}).next()
