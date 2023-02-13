@@ -190,6 +190,15 @@ def pull_transform():
     except Exception as e: 
         print("mongo connection failed")
         print(e)
+    collection_aug=db_test[f'test_{factory_name}']
+    try:
+        for row in data:
+            uniq=row['_time']
+            result = collection_aug.update_one({'idx':uniq},{"$set":row},upsert=True)
+    except Exception as e: 
+        print("mongo connection failed")
+        print(e)
+    
     client.close()
     print("hello")
 
