@@ -729,9 +729,9 @@ def teng():
     logging.info('Step 1. Preprocess data')
     # Read Data and reconstruct data fromat for TadGAN
 
-    consumer = KafkaConsumer('test.coops2022_etl.etl_data',
+    consumer = KafkaConsumer('etl.etl_data.etl_teng',
             group_id=f'teng_{train_dt}',
-            bootstrap_servers=['kafka-clust-kafka-persis-d198b-11683092-d3d89e335b84.kr.lb.naverncp.com:9094'],
+            bootstrap_servers=['kafka-clust-kafka-persis-cc65d-15588214-38845b0307b9.kr.lb.naverncp.com:9094'],
             value_deserializer=lambda x: loads(x.decode('utf-8')),
             auto_offset_reset='earliest',
             consumer_timeout_ms=10000
