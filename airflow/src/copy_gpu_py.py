@@ -313,8 +313,9 @@ def iqr_mds_gan():
         host = os.environ['MONGO_URL_SECRET'] 
         client = MongoClient(host)
 
-        db_test = client['coops2022_aug']
-        collection_aug=db_test['mongo_aug1']
+        db_test = client['aug_data']
+        factory_name='teng'
+        collection_aug=db_test[f'aug_test_{factory_name}']
         data=Augdata.to_dict('records')
     # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
         try:
