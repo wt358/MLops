@@ -47,7 +47,7 @@ def SaveModel(model,collection_name,model_name,train_dt):
     print('saving model...')
     host = os.environ['MONGO_URL_SECRET']
     client=MongoClient(host)
-    db_model = client['coops2022_model']
+    db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
     collection_model = db_model[collection_name]
        

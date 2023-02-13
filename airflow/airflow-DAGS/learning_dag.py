@@ -19,7 +19,7 @@ from sqlalchemy.sql import text
 from pymongo import MongoClient
 import pandas as pd
 
-gpu_tag='0.02'
+gpu_tag='0.03'
 tad_tag='0.01'
 
 dag_id = 'learning-dag'
@@ -333,7 +333,7 @@ for path in paths:
     if path == 'path_main':
         main_or_vari >> t >> run_iqr >> after_aug 
         after_aug >> [run_svm, run_lstm] >> after_ml
-        after_aug >> run_eval
+        # after_aug >> run_eval
     elif path == 'path_vari':
         main_or_vari >> t >> run_tadgan
         
