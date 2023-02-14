@@ -344,28 +344,26 @@ def model_inference():
 def push_onpremise():
     model_name = 'LSTM_autoencoder'
 
-    mongoClient = MongoClient()
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
-    db_result = client['coops2022_result']
-    collection = db_result[f'result_{model_name}']
+    db_result = client['result_log']
+    collection = db_result[f'log_{model_name}_teng']
     
     try:
         df = pd.DataFrame(list(collection.find()))
     except Exception as e:
         print("mongo connection failer during pull",e)
-
+    client.close()
     df=df.drop_duplicates(subset=["_id"])
     df.drop(columns={'_id'},inplace=True)
 
     print(df.head())
 
 # for on premise
-    mongoClient = MongoClient()
     host = Variable.get("LOCAL_MONGO_URL_SECRET")
     client = MongoClient(host)
-    db_model = client['coops2022_result']
-    collection=db_model[f'result_{model_name}']
+    db_model = client['result_log']
+    collection=db_model[f'teng_{model_name}']
     
     data=df.to_dict('records')
 
@@ -373,7 +371,7 @@ def push_onpremise():
         collection.insert_many(data,ordered=False)
     except Exception as e:
         print("mongo connection failer during push",e)
-
+    client.close()
     print("hello push on premise")
 
 def which_path():
