@@ -226,7 +226,6 @@ def infer_lstm():
     scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
     scored['Threshold'] = 0.1
     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
-    scored['label'] = labled['label']
     print(scored.head())
 
     y_test = scored['Anomaly']
