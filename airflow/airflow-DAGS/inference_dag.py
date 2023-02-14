@@ -464,7 +464,7 @@ with DAG(
         startup_timeout_seconds=600,
     )
     infer_main = KubernetesPodOperator(
-        task_id="main_infer_pod_operator",
+        task_id="main_infer_lstm_pod_operator",
         name="main-infer-lstm",
         namespace='airflow-cluster',
         image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
@@ -485,7 +485,7 @@ with DAG(
     )
     
     infer_svm = KubernetesPodOperator(
-        task_id="main_infer_pod_operator",
+        task_id="main_infer_svm_pod_operator",
         name="main-infer-ocsvm",
         namespace='airflow-cluster',
         image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
