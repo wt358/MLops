@@ -495,8 +495,8 @@ with DAG(
             )
         
         if path == 'path_main':
-            main_or_vari>>t>>infer_main 
-            # main_or_vari>>t>>infer_main >> t2
+            # main_or_vari>>t>>infer_main 
+            main_or_vari>>t>>infer_main >> t2
 
         elif path == 'path_vari':
             main_or_vari>>t>>infer_tadgan
