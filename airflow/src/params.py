@@ -1,4 +1,5 @@
 train_data_path = './data/cleansed/test.csv'
+test_data_path = './data/cleansed/test1.csv'
 train_columns = ['Plasticizing_Time'] # ['Max_Switch_Over_Pressure', 'Cycle_Time', 'Max_Injection_Pressure', 'Barrel_Temperature_6'] # change column names if EDA result is changed
 time_columns = "TimeStamp" # Update name if TimeStamp column name is changed
 
