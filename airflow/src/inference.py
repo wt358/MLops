@@ -147,6 +147,9 @@ def infer_lstm():
     df.drop(columns={'_id',
         },inplace=True)
     
+    df.rename(columns={'_time':'TimeStamp'},inplace=True)
+    df['idx']=df['idx'].apply(lambda x : x['$date'])
+    df['idx']=df['idx'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
     print(df)
 
     important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
@@ -223,6 +226,7 @@ def infer_lstm():
     
     scored = pd.DataFrame(index=test.index)
     Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
+    scored['TimeStamp'] = df['idx']
     scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
     scored['Threshold'] = 0.1
     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
@@ -237,7 +241,7 @@ def infer_lstm():
     db_test = client['result_log']
     collection = db_test[f'log_{model_name}_teng']
     #data=scored.to_dict('records')
-    data=X_pred.to_dict('records')
+    data=scored.to_dict('records')
 
     try:
         collection.insert_many(data,ordered=False)
