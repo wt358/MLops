@@ -192,7 +192,7 @@ def infer_ocsvm():
     joblib.dump(model, model_fpath)
     
     print(model.get_params())
-    print(model.summary())
+    # print(model.summary())
     
     y_pred = model.predict(target_columns)
     print(y_pred)
