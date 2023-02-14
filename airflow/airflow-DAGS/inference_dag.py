@@ -75,7 +75,7 @@ from sqlalchemy.sql import text
 from json import loads
 import random as rn
 
-gpu_tag='0.10'
+gpu_tag='0.11'
 tad_tag='0.01'
 
 np.random.seed(34)
@@ -465,7 +465,7 @@ with DAG(
     )
     infer_main = KubernetesPodOperator(
         task_id="main_infer_pod_operator",
-        name="main-infer-gan",
+        name="main-infer-lstm",
         namespace='airflow-cluster',
         image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
         # image_pull_policy="Always",
@@ -483,7 +483,27 @@ with DAG(
         get_logs=True,
         startup_timeout_seconds=600,
     )
-
+    
+    infer_svm = KubernetesPodOperator(
+        task_id="main_infer_pod_operator",
+        name="main-infer-ocsvm",
+        namespace='airflow-cluster',
+        image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
+        # image_pull_policy="Always",
+        # image_pull_policy="IfNotPresent",
+        image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+        cmds=["python3"],
+        arguments=["copy_gpu_py.py", "infer_ocsvm"],
+        affinity=cpu_aff,
+        # resources=pod_resources,
+        secrets=[secret_all, secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
+                 secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb],
+        # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
+        # configmaps=configmaps,
+        is_delete_operator_pod=True,
+        get_logs=True,
+        startup_timeout_seconds=600,
+    )
 
     dummy1 = DummyOperator(task_id="path1")
     # 테스크 순서를 정합니다.
@@ -498,7 +518,7 @@ with DAG(
         
         if path == 'path_main':
             # main_or_vari>>t>>infer_main 
-            main_or_vari>>t>>infer_main >> t2
+            main_or_vari>>t>>[infer_main,infer_svm] >> t2
 
         elif path == 'path_vari':
             main_or_vari>>t>>infer_tadgan

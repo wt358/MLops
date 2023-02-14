@@ -54,10 +54,10 @@ def infer_tad():
 def infer_main():
     logging.info('########## START INFERENCE ##########')
     
-    logging.info('- CPU envrionmental')
-    logging.info('OC_SVM in CPU environment')
+    # logging.info('- CPU envrionmental')
+    # logging.info('OC_SVM in CPU environment')
 
-    infer_ocsvm()
+    # infer_ocsvm()
     
     logging.info('- GPU environmental')
 
