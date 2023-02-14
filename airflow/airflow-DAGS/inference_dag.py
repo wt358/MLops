@@ -75,7 +75,7 @@ from sqlalchemy.sql import text
 from json import loads
 import random as rn
 
-gpu_tag='0.07'
+gpu_tag='0.08'
 tad_tag='0.01'
 
 np.random.seed(34)
@@ -342,36 +342,38 @@ def model_inference():
     print("hello inference")
 
 def push_onpremise():
-    model_name = 'LSTM_autoencoder'
+    model_names = ['LSTM_autoencoder','OC_SVM']
+    for model_name in model_names:
+            
+        host = Variable.get("MONGO_URL_SECRET")
+        client = MongoClient(host)
+        db_result = client['result_log']
+        collection = db_result[f'log_{model_name}_teng']
+        
+        try:
+            df = pd.DataFrame(list(collection.find()))
+        except Exception as e:
+            print("mongo connection failer during pull",e)
+            
+        client.close()
+        df=df.drop_duplicates(subset=["_id"])
+        df.drop(columns={'_id'},inplace=True)
 
-    host = Variable.get("MONGO_URL_SECRET")
-    client = MongoClient(host)
-    db_result = client['result_log']
-    collection = db_result[f'log_{model_name}_teng']
-    
-    try:
-        df = pd.DataFrame(list(collection.find()))
-    except Exception as e:
-        print("mongo connection failer during pull",e)
-    client.close()
-    df=df.drop_duplicates(subset=["_id"])
-    df.drop(columns={'_id'},inplace=True)
+        print(df.head())
 
-    print(df.head())
+    # for on premise
+        host = Variable.get("LOCAL_MONGO_URL_SECRET")
+        client = MongoClient(host)
+        db_model = client['result_log']
+        collection=db_model[f'teng_{model_name}']
+        
+        data=df.to_dict('records')
 
-# for on premise
-    host = Variable.get("LOCAL_MONGO_URL_SECRET")
-    client = MongoClient(host)
-    db_model = client['result_log']
-    collection=db_model[f'teng_{model_name}']
-    
-    data=df.to_dict('records')
-
-    try:
-        collection.insert_many(data,ordered=False)
-    except Exception as e:
-        print("mongo connection failer during push",e)
-    client.close()
+        try:
+            collection.insert_many(data,ordered=False)
+        except Exception as e:
+            print("mongo connection failer during push",e)
+        client.close()
     print("hello push on premise")
 
 def which_path():

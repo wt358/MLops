@@ -53,7 +53,13 @@ def infer_tad():
 
 def infer_main():
     logging.info('########## START INFERENCE ##########')
-    logging.info('- GPU envrionmental')
+    
+    logging.info('- CPU envrionmental')
+    logging.info('OC_SVM in CPU environment')
+
+    infer_ocsvm()
+    
+    logging.info('- GPU environmental')
 
     gpus = tf.config.experimental.list_physical_devices('GPU')
 
@@ -82,7 +88,174 @@ def infer_main():
 
     infer_lstm()
     print("hello inference the main products")
+    
+def infer_ocsvm():
+    
+    update_dt = datetime.now().strftime("%Y-%m-%d")
+    test_data_path = params.test_data_path
+    train_columns = params.train_columns
+    time_columns = params.time_columns
+    interval =params.interval
+    latent_dim = params.latent_dim
+    shape = params.shape
+    encoder_input_shape = params.encoder_input_shape
+    generator_input_shape = params.generator_input_shape
+    critic_x_input_shape = params.critic_x_input_shape
+    critic_z_input_shape = params.critic_z_input_shape
+    encoder_reshape_shape = params.encoder_reshape_shape
+    generator_reshape_shape = params.generator_reshape_shape
+    learning_rate = params.learning_rate
+    batch_size = params.batch_size
+    n_critics = params.n_critics
+    epochs = params.epochs
+    check_point = params.check_point
+    z_range =params.z_range
+    window_size = params.window_size
+    window_size_portion = params.window_size_portion
+    window_step_size = params.window_step_size
+    window_step_size_portion =params.window_step_size_portion
+    min_percent = params.min_percent
+    anomaly_padding =params.anomaly_padding
 
+        
+    #data consumer
+    
+    now = datetime.now()
+    curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
+    consumer = KafkaConsumer('etl.etl_data.test_teng',
+        group_id=f'infer_ocsvm_{curr_time}',
+        bootstrap_servers=['kafka-clust-kafka-persis-cc65d-15588214-38845b0307b9.kr.lb.naverncp.com:9094'],
+        value_deserializer=lambda x: loads(x.decode('utf-8')),
+        auto_offset_reset='earliest',
+        consumer_timeout_ms=10000
+        )
+    
+    #consumer.poll(timeout_ms=1000, max_records=2000)
+
+    #dataframe extract
+    l=[]
+
+    for message in consumer:
+        message = message.value
+        l.append(loads(message['payload'])['fullDocument'])
+    df = pd.DataFrame(l)
+    consumer.close()
+    print(df)
+    if df.empty:
+        print("empty queue")
+        return
+    # dataframe transform
+    df=df[df['idx']!='idx']
+    print(df.shape)
+    print(df.columns)
+    print(df)
+
+    df.drop(columns={'_id',
+        },inplace=True)
+    
+    df.rename(columns={'_time':'TimeStamp'},inplace=True)
+    df['idx']=df['idx'].apply(lambda x : x['$date'])
+    df['idx']=df['idx'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
+    print(df)
+
+    important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
+    
+    labled = pd.DataFrame(df, columns = important_columns)
+    labled.columns = map(str.lower,labled.columns)
+    # labled.rename(columns={'class':'label'},inplace=True)
+    print(labled.head())
+    important_columns.remove('Class')
+    target_columns = pd.DataFrame(labled, columns = map(str.lower,important_columns))
+
+    target_columns.astype('float')
+     
+    db_model = client['model_var']
+    fs = gridfs.GridFS(db_model)
+    collection_model=db_model['OCSVM_teng']
+    
+    model_name = 'OC_SVM'
+    model_fpath = f'{model_name}.joblib'
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+    print(result)
+    cnt=len(list(result.clone()))
+    print(cnt)
+    
+    try:
+        file_id = str(result[0]['file_id'])
+        model = LoadModel(mongo_id=file_id).clf
+    except Exception as e:
+        print("exception occured in oc_svm",e)
+        return 1
+    joblib.dump(model, model_fpath)
+    
+    print(model.get_params())
+    print(model.summary())
+    
+    y_pred = model.predict(target_columns)
+    print(y_pred)
+
+    # filter outlier index
+    outlier_index = np.where(y_pred == -1)
+
+    #filter outlier values
+    outlier_values = target_columns.iloc[outlier_index]
+    print(outlier_values)
+    
+    # 이상값은 -1으로 나타낸다.
+    score = model.fit(target_columns)
+    anomaly = model.predict(target_columns)
+    target_columns['anomaly']= anomaly
+    anomaly_data = target_columns.loc[target_columns['anomaly']==-1] 
+    print(target_columns['anomaly'].value_counts())
+
+    target_columns[target_columns['anomaly']==1] = 0
+    target_columns[target_columns['anomaly']==-1] = 1
+    target_columns['Anomaly'] = target_columns['anomaly'] > 0.5
+    y_test = target_columns['Anomaly']
+    
+    print(y_test.unique())
+
+    # df1 = pd.DataFrame(labled, columns = ['label'])
+    # print(df1.label)
+    
+    # outliers = df1['label']
+    # outliers = outliers.fillna(0)
+    # print(outliers.unique())
+    # print(outliers)
+    
+    print(y_test)
+    y_log = pd.DataFrame(index=df.index)
+    y_log['TimeStamp']=df['idx']
+    y_log['Anomaly']=y_test
+    # outliers = outliers.to_numpy()
+    # y_test = y_test.to_numpy()
+
+    # get (mis)classification
+    # cf = confusion_matrix(outliers, y_test)
+
+    # true/false positives/negatives
+    # print(cf)
+    # (tn, fp, fn, tp) = cf.flatten()
+    db_test = client['result_log']
+    collection = db_test[f'log_{model_name}_teng']
+    #data=scored.to_dict('records')
+    data=y_log.to_dict('records')
+
+    try:
+        collection.insert_many(data,ordered=False)
+    except Exception as e:
+        print("mongo connection failer",e)
+
+
+    # print(f"""{cf}
+    # % of transactions labeled as fraud that were correct (precision): {tp}/({fp}+{tp}) = {tp/(fp+tp):.2%}
+    # % of fraudulent transactions were caught succesfully (recall):    {tp}/({fn}+{tp}) = {tp/(fn+tp):.2%}
+    # % of g-mean value : root of (specificity)*(recall) = ({tn}/({fp}+{tn})*{tp}/({fn}+{tp})) = {(tn/(fp+tn)*tp/(fn+tp))**0.5 :.2%}""")
+ 
+ 
+    client.close()
+    print("hello infer ocsvm")
+    
 def infer_lstm():
     
     update_dt = datetime.now().strftime("%Y-%m-%d")
@@ -117,7 +290,7 @@ def infer_lstm():
     now = datetime.now()
     curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
     consumer = KafkaConsumer('etl.etl_data.test_teng',
-        group_id=f'infer_local_{curr_time}',
+        group_id=f'infer_lstm_{curr_time}',
         bootstrap_servers=['kafka-clust-kafka-persis-cc65d-15588214-38845b0307b9.kr.lb.naverncp.com:9094'],
         value_deserializer=lambda x: loads(x.decode('utf-8')),
         auto_offset_reset='earliest',
@@ -161,7 +334,7 @@ def infer_lstm():
     print(labled.head())
 
     X_test = labled.sample(frac=1)
-    test = X_test 
+    test = X_test
     X_test=X_test.values
     print(f"""Shape of the datasets:
         Testing  (rows, cols) = {X_test.shape}""")
@@ -252,6 +425,4 @@ def infer_lstm():
 
     print("hello inference lstm ae")
     
-def infer_ocsvm():
-    print("hello inference ocsvm")
     
