@@ -75,7 +75,7 @@ from sqlalchemy.sql import text
 from json import loads
 import random as rn
 
-gpu_tag='0.08'
+gpu_tag='0.09'
 tad_tag='0.01'
 
 np.random.seed(34)

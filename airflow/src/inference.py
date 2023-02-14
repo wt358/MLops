@@ -168,6 +168,9 @@ def infer_ocsvm():
     target_columns = pd.DataFrame(labled, columns = map(str.lower,important_columns))
 
     target_columns.astype('float')
+    
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
      
     db_model = client['model_var']
     fs = gridfs.GridFS(db_model)

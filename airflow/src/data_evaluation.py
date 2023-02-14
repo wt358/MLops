@@ -89,8 +89,8 @@ def data_eval():
     """수정사항: 데이터 Read 부분: 주생산품 데이터 with augmentation"""
     host = os.environ['MONGO_URL_SECRET'] 
     client = MongoClient(host)
-    db_test = client['coops2022_aug']
-    collection_aug=db_test['mongo_aug1']
+    db_test = client['aug_data']
+    collection_aug=db_test['aug_test_teng']
     try:
         moldset_df = pd.DataFrame(list(collection_aug.find()))
     except:
@@ -101,7 +101,7 @@ def data_eval():
 
     df = moldset_df
 
-    df = df.drop(['_id','Machine_Name','Additional_Info_1', 'Additional_Info_2','Shot_Number'],axis=1)
+    df = df.drop(['_id'],axis=1)
     idx = df.pop('idx')
     y = df.pop('Class')
     dt = pd.to_datetime(df.pop('TimeStamp'))
@@ -156,7 +156,7 @@ def data_eval():
     best_score = {}
     best_param = {}
     learning_time = []
-    db_test = client['coops2022_eval']
+    db_test = client['eval_data']
     for name, clf, param in zip(names, classifiers, params):
         start = datetime.now()
         clf_gridsearch = GridSearchCV(clf, param, scoring='f1')
