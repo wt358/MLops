@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime
 
@@ -41,7 +40,7 @@ def infer_tad():
             logging.info(e)
         logging.info(gpus)
     else:
-        logging.info('NO CPU')
+        logging.info('NO GPU')
 
 
     ####################################################################################
@@ -72,7 +71,7 @@ def infer_main():
             logging.info(e)
         logging.info(gpus)
     else:
-        logging.info('NO CPU')
+        logging.info('NO GPU')
 
 
     ####################################################################################
@@ -117,14 +116,14 @@ def infer_lstm():
     
     now = datetime.now()
     curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
-
-    consumer = KafkaConsumer('test.coops2022_etl.etl_data',
-            group_id=f'Inference_lstm_{curr_time}',
-            bootstrap_servers=['kafka-clust-kafka-persis-d198b-11683092-d3d89e335b84.kr.lb.naverncp.com:9094'],
-            value_deserializer=lambda x: loads(x.decode('utf-8')),
-            auto_offset_reset='earliest',
-            consumer_timeout_ms=10000
-            )
+    consumer = KafkaConsumer('etl.etl_data.test_teng',
+        group_id=f'infer_local_{curr_time}',
+        bootstrap_servers=['kafka-clust-kafka-persis-cc65d-15588214-38845b0307b9.kr.lb.naverncp.com:9094'],
+        value_deserializer=lambda x: loads(x.decode('utf-8')),
+        auto_offset_reset='earliest',
+        consumer_timeout_ms=10000
+        )
+    
     #consumer.poll(timeout_ms=1000, max_records=2000)
 
     #dataframe extract
@@ -134,6 +133,7 @@ def infer_lstm():
         message = message.value
         l.append(loads(message['payload'])['fullDocument'])
     df = pd.DataFrame(l)
+    consumer.close()
     print(df)
     if df.empty:
         print("empty queue")
@@ -149,9 +149,9 @@ def infer_lstm():
     
     print(df)
 
-    
-    labled = pd.DataFrame(df, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position'])
-
+    important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
+    important_columns.remove('Class')
+    labled = pd.DataFrame(df, columns = important_columns)
 
     labled.columns = map(str.lower,labled.columns)
 
@@ -165,13 +165,14 @@ def infer_lstm():
     
     host = os.environ['MONGO_URL_SECRET'] 
     client = MongoClient(host)
-    db_model = client['coops2022_model']
+    
+    db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
-    collection_model=db_model['mongo_scaler_lstm']
+    collection_model=db_model['scaler_lstm_teng']
     
     model_name = 'scaler_data'
     model_fpath = f'{model_name}.joblib'
-    result = collection_model.find({"model_name": model_name}).sort('uploadDate', -1)
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
     print(result)
     if len(list(result.clone()))==0:
         print("empty")
@@ -193,10 +194,10 @@ def infer_lstm():
     #model load    
     
     model_name = 'LSTM_autoencoder'
-    collection_model=db_model[f'mongo_{model_name}']
+    collection_model=db_model[f'{model_name}_teng']
     
     model_fpath = f'{model_name}.joblib'
-    result = collection_model.find({"model_name": model_name}).sort('uploadDate', -1)
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
     
     print(result)
     if len(list(result.clone()))==0:
@@ -225,6 +226,7 @@ def infer_lstm():
     scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
     scored['Threshold'] = 0.1
     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
+    scored['label'] = labled['label']
     print(scored.head())
 
     y_test = scored['Anomaly']
@@ -233,8 +235,8 @@ def infer_lstm():
 
     print(y_test)
 
-    db_test = client['coops2022_result']
-    collection = db_test[f'result_{model_name}']
+    db_test = client['result_log']
+    collection = db_test[f'log_{model_name}_teng']
     #data=scored.to_dict('records')
     data=X_pred.to_dict('records')
 

@@ -75,6 +75,9 @@ from sqlalchemy.sql import text
 from json import loads
 import random as rn
 
+gpu_tag='0.04'
+tad_tag='0.01'
+
 np.random.seed(34)
 
 # manual parameters
@@ -88,18 +91,36 @@ rn.seed(RANDOM_SEED)
 tf.random.set_seed(RANDOM_SEED)
 
 rn.seed(10)
-secret_all = Secret('env', None, 'db-secret-ggd7k5tgg2')
+
+secret_env = Secret(
+        # Expose the secret as environment variable.
+        deploy_type='env',
+        # The name of the environment variable, since deploy_type is `env` rather
+        # than `volume`.
+        deploy_target='MONGO_URL_SECRET',
+        # Name of the Kubernetes Secret
+        secret='db-secret-hk8b2hk77m',
+        # Key of a secret stored in this Secret object
+        key='MONGO_URL_SECRET')
+secret_volume = Secret(
+        deploy_type='volume',
+        # Path where we mount the secret as volume
+        deploy_target='/var/secrets/db',
+        # Name of Kubernetes Secret
+        secret='db-secret-hk8b2hk77m',
+        # Key in the form of service account file name
+        key='mongo-url-secret.json')
+secret_all = Secret('env', None, 'db-secret-hk8b2hk77m')
 secret_all1 = Secret('env', None, 'airflow-cluster-config-envs')
 secret_all2 = Secret('env', None, 'airflow-cluster-db-migrations')
 secret_all3 = Secret('env', None, 'airflow-cluster-pgbouncer')
 secret_all4 = Secret('env', None, 'airflow-cluster-pgbouncer-certs')
 secret_all5 = Secret('env', None, 'airflow-cluster-postgresql')
 secret_all6 = Secret('env', None, 'airflow-cluster-sync-users')
-secret_all7 = Secret('env', None, 'airflow-cluster-token-8qgp2')
+secret_all7 = Secret('env', None, 'airflow-cluster-token-7wptr')
 secret_all8 = Secret('env', None, 'airflow-cluster-webserver-config')
-secret_all9 = Secret('env', None, 'airflow-git-ssh-secret2')
 secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
-secret_allb = Secret('env', None, 'default-token-hkdgr')
+secret_allb = Secret('env', None, 'default-token-8d2dz')
 
 
 gpu_aff={
@@ -122,7 +143,7 @@ gpu_aff={
                         # The label key's value that pods can be scheduled
                         # on.
                         'values': [
-                            'pseudo-gpu-w-1yz7',
+                            'pseudo-gpu-w-2bsh',
                             #'pool-1',
                             ]
                         }]
@@ -138,14 +159,15 @@ cpu_aff={
                         'key': 'kubernetes.io/hostname',
                         'operator': 'In',
                         'values': [
-                            'high-memory-w-1ih9',
-                            'high-memory-w-1iha',
+                            'high-memory-w-23op',
+                            'high-memory-w-23oq',
                             ]
                         }]
                     }]
                 }
             }
         }
+
 
 
 tf.random.set_seed(10)
@@ -358,27 +380,27 @@ def which_path():
   '''
   return the task_id which to be executed
   '''
-  host = Variable.get("MS_HOST")
-  database = Variable.get("MS_DATABASE")
-  username = Variable.get("MS_USERNAME")
-  password = Variable.get("MS_PASSWORD")
+#   host = Variable.get("MS_HOST")
+#   database = Variable.get("MS_DATABASE")
+#   username = Variable.get("MS_USERNAME")
+#   password = Variable.get("MS_PASSWORD")
 
-  query = text(
-      "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(day,-7,GETDATE())"
-      )
-  conection_url = sqlalchemy.engine.url.URL(
-      drivername="mssql+pymssql",
-      username=username,
-      password=password,
-      host=host,
-      database=database,
-  )
-  engine = create_engine(conection_url, echo=True)
+#   query = text(
+#       "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(day,-7,GETDATE())"
+#       )
+#   conection_url = sqlalchemy.engine.url.URL(
+#       drivername="mssql+pymssql",
+#       username=username,
+#       password=password,
+#       host=host,
+#       database=database,
+#   )
+#   engine = create_engine(conection_url, echo=True)
   
-  sql_result_pd = pd.read_sql_query(query, engine)
-  mode_machine_name=sql_result_pd['Additional_Info_1'].value_counts().idxmax()
-  print(sql_result_pd['Additional_Info_1'].value_counts())
-  print(mode_machine_name) 
+#   sql_result_pd = pd.read_sql_query(query, engine)
+#   mode_machine_name=sql_result_pd['Additional_Info_1'].value_counts().idxmax()
+#   print(sql_result_pd['Additional_Info_1'].value_counts())
+#   print(mode_machine_name) 
   
   
 #   if '9000a' in mode_machine_name:
@@ -425,7 +447,7 @@ with DAG(
         task_id="tad_infer_pod_operator",
         name="tad-infer-gan",
         namespace='airflow-cluster',
-        image='wcu5i9i6.kr.private-ncr.ntruss.com/tad:0.01',
+        image=f'ctf-mlops.kr.ncr.ntruss.com/tad:{tad_tag}',
         # image_pull_policy="Always",
         # image_pull_policy="IfNotPresent",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
@@ -445,7 +467,7 @@ with DAG(
         task_id="main_infer_pod_operator",
         name="main-infer-gan",
         namespace='airflow-cluster',
-        image='wcu5i9i6.kr.private-ncr.ntruss.com/cuda:0.80',
+        image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
         # image_pull_policy="Always",
         # image_pull_policy="IfNotPresent",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
@@ -475,7 +497,8 @@ with DAG(
             )
         
         if path == 'path_main':
-            main_or_vari>>t>>infer_main >> t2
+            main_or_vari>>t>>infer_main 
+            # main_or_vari>>t>>infer_main >> t2
 
         elif path == 'path_vari':
             main_or_vari>>t>>infer_tadgan
