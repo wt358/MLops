@@ -75,7 +75,7 @@ from sqlalchemy.sql import text
 from json import loads
 import random as rn
 
-gpu_tag='0.12'
+gpu_tag='0.13'
 tad_tag='0.01'
 
 np.random.seed(34)
@@ -451,8 +451,8 @@ with DAG(
         # image_pull_policy="Always",
         # image_pull_policy="IfNotPresent",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        cmds=["python3"],
-        arguments=["copy_gpu_py.py", "infer_tad"],
+        cmds=["sh"],
+        arguments=["command.sh", "infer_tad"],
         affinity=gpu_aff,
         # resources=pod_resources,
         secrets=[secret_all, secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
@@ -471,8 +471,8 @@ with DAG(
         # image_pull_policy="Always",
         # image_pull_policy="IfNotPresent",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        cmds=["python3"],
-        arguments=["copy_gpu_py.py", "infer_main"],
+        cmds=["sh"],
+        arguments=["command.sh", "infer_main"],
         affinity=gpu_aff,
         # resources=pod_resources,
         secrets=[secret_all, secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
@@ -492,8 +492,8 @@ with DAG(
         # image_pull_policy="Always",
         # image_pull_policy="IfNotPresent",
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        cmds=["python3"],
-        arguments=["copy_gpu_py.py", "infer_ocsvm"],
+        cmds=["sh"],
+        arguments=["command.sh", "infer_ocsvm"],
         affinity=cpu_aff,
         # resources=pod_resources,
         secrets=[secret_all, secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
