@@ -7,4 +7,4 @@ mkdir py-test
 cp ./MLops/airflow/src/*.py ./py-test/
 # cp ./airflow-DAGS/pyfile/*.py ./py-test/
 
-python3 -c "./py-test/copy_gpu_py.py ${FUNC}"
+python3 ./py-test/copy_gpu_py.py ${FUNC}
