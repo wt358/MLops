@@ -474,7 +474,8 @@ def lstm_autoencoder():
     client = MongoClient(host)
     
     db_test = client['aug_data']
-    collection_aug=db_test['aug_test_teng']
+    today1=datetime.today()
+    collection_aug=db_test[f'aug_test_teng_{today1}']
     
     try:
         moldset_df = pd.DataFrame(list(collection_aug.find()))
