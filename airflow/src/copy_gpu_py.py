@@ -313,7 +313,7 @@ def iqr_mds_gan():
 
         db_test = client['aug_data']
         factory_name='teng'
-        today1=datetime.today()
+        today1=datetime.now().strftime("%Y-%m-%d")
         collection_aug=db_test[f'aug_test_{factory_name}_{today1}']
         collection_aug.create_index([("TimeStamp",ASCENDING)],unique=True)
         data=Augdata.to_dict('records')
@@ -348,7 +348,7 @@ def oc_svm():
     client = MongoClient(host)
     
     db_test = client['aug_data']
-    today1=datetime.today()
+    today1=datetime.now().strftime("%Y-%m-%d")
     collection_aug=db_test[f'aug_test_teng_{today1}']
     
     try:
@@ -472,7 +472,7 @@ def lstm_autoencoder():
     client = MongoClient(host)
     
     db_test = client['aug_data']
-    today1=datetime.today()
+    today1=datetime.now().strftime("%Y-%m-%d")
     collection_aug=db_test[f'aug_test_teng_{today1}']
     
     try:
