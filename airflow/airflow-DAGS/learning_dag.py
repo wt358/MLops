@@ -147,12 +147,13 @@ def print_stat(df,i):
     client = MongoClient(host)
     db_rank= client['stat']
     collection = db_rank[f'teng_{i}month_{today}']
+    
     collection.create_index([("Today",ASCENDING),("Feature",ASCENDING)],unique=True)
-    df2=df[df['TimeStamp'] > date_1month ]
+    df2=df[df['_time'] > date_1month ]
     print(df2)
     print("\n",i,"month statistics")
     print("====================================")
-    stat_df=df2.drop(columns={'TimeStamp'}).describe().T
+    stat_df=df2.drop(columns={'_time'}).describe().T
     stat_df.reset_index(inplace=True)
     stat_df=stat_df.rename(columns={'index':'Feature'})
     print(stat_df)
