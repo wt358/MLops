@@ -173,6 +173,7 @@ def data_eval():
         )
         print(output_df)
         collection=db_test[f'{name}']
+        collection.create_index([("date",ASCENDING)],unique=True)
         data=output_df.to_dict('records')
         try:
             collection.insert_many(data, ordered=False)
