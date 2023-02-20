@@ -447,7 +447,7 @@ with DAG(
         owner="coops2",
         retries=0,
         retry_delay=timedelta(minutes=1),
-        trigger_rule=none_failed_min_one_success,
+        trigger_rule='none_failed_min_one_success',
     )
     main_or_vari = BranchPythonOperator(
         task_id = 'branch',
