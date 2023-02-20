@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 from collections import Counter
 from joblib import dump, load
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING, DESCENDING
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
