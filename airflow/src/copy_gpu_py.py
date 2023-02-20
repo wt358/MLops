@@ -651,8 +651,11 @@ def lstm_autoencoder():
         % of transactions labeled as fraud that were correct (precision): {tp}/({fp}+{tp}) = {tp/(fp+tp):.2%}
         % of fraudulent transactions were caught succesfully (recall):    {tp}/({fn}+{tp}) = {tp/(fn+tp):.2%}
         % of g-mean value : root of (specificity)*(recall) = ({tn}/({fp}+{tn})*{tp}/({fn}+{tp})) = {(tn/(fp+tn)*tp/(fn+tp))**0.5 :.2%}""")
-
-        print(roc_auc_score(outliers, y_test))
+        try:
+            print(roc_auc_score(outliers, y_test))
+        except Exception as e:
+            print("error occured in roc_auc_score")
+            print(e)
     
     
         db_model = client['model_var']
