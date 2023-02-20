@@ -116,7 +116,7 @@ def data_eval():
     """수정사항: 예외처리 -> train_data에 라벨이 1가지인 경우(불량이 없는 경우) -> 학습 불가능"""
     if y.value_counts().shape[0] == 2:
         pass
-    except:
+    else:
         logging.info('########## Cannot find anomalies ##########')
         break
             
