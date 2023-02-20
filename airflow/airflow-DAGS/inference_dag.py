@@ -345,7 +345,7 @@ def push_onpremise():
     model_names = ['LSTM_autoencoder','OC_SVM']
     
     now=datetime.now()
-    start=now-timedelta(days=50)
+    start=now-timedelta(days=60)
     for model_name in model_names:
             
         host = Variable.get("MONGO_URL_SECRET")
