@@ -107,7 +107,7 @@ secret_volume = Secret(
         # Path where we mount the secret as volume
         deploy_target='/var/secrets/db',
         # Name of Kubernetes Secret
-        secrey='db-secret-hk8b2hk77m',
+        secret='db-secret-hk8b2hk77m',
         # Key in the form of service account file name
         key='mongo-url-secret.json')
 secret_all = Secret('env', None, 'db-secret-hk8b2hk77m')
