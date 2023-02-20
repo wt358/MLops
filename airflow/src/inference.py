@@ -137,7 +137,11 @@ def infer_ocsvm():
 
     for message in consumer:
         message = message.value
-        l.append(loads(message['payload'])['fullDocument'])
+        try:
+            l.append(loads(message['payload'])['fullDocument'])
+        except:
+            print(message)
+
     df = pd.DataFrame(l)
     consumer.close()
     print(df)
@@ -308,7 +312,10 @@ def infer_lstm():
 
     for message in consumer:
         message = message.value
-        l.append(loads(message['payload'])['fullDocument'])
+        try:
+            l.append(loads(message['payload'])['fullDocument'])
+        except:
+            print(message)
     df = pd.DataFrame(l)
     consumer.close()
     print(df)
