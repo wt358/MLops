@@ -30,8 +30,8 @@ def customize(dataframe,mds_matrix):
 
 def IQR(section):
     
-    section.iloc[:,2:]=section.iloc[:,2:].apply(pd.to_numeric,errors='coerce')
-    for i in range(2,10):
+    section.iloc[:,1:]=section.iloc[:,1:].apply(pd.to_numeric,errors='coerce')
+    for i in range(1,10):
         level_1q = section.iloc[:,i].quantile(0.025)
         level_3q = section.iloc[:,i].quantile(0.975)
         IQR = level_3q - level_1q
@@ -46,7 +46,7 @@ def MDS_molding(pds):
         start_time = time.time()
         print('%d 번째' %i)
         pds[i]['TimeStamp']=pd.to_datetime(pds[i]['TimeStamp']).astype('int64')/10**9
-        dataframe=pds[i].iloc[:,1:]
+        dataframe=pds[i].iloc[:,:]
         if len(pds[i])>=30:
             std = StandardScaler().fit_transform(pds[i].iloc[:,1:]) ## 정규화 진행
             end_time = time.time()
@@ -64,7 +64,7 @@ def MDS_molding(pds):
             answer=pd.DataFrame(np.zeros(len(pds[i]))) 
             answer.rename(columns = {0:'Class'},inplace=True) 
             dataframe.reset_index(inplace=True,drop=True)     
-            result = pd.DataFrame(pd.concat([pds[i].iloc[:,1:],answer], axis = 1))
+            result = pd.DataFrame(pd.concat([pds[i].iloc[:,:],answer], axis = 1))
             list1.append(result)
             end_time = time.time()
             print('    else 코드 실행 시간: %20ds' % (end_time - start_time))

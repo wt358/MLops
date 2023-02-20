@@ -142,7 +142,6 @@ def iqr_mds_gan():
     print(df)
     consumer.close()
     # dataframe transform
-    df=df[df['idx']!='idx']
     print(df.shape)
     print(df.columns)
     print(df)
@@ -152,8 +151,7 @@ def iqr_mds_gan():
     df.rename(columns={'_time':'TimeStamp'},inplace=True)
     df['TimeStamp']=df['TimeStamp'].apply(lambda x : x['$date'])
     df['TimeStamp']=df['TimeStamp'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
-    df['idx']=df['idx'].apply(lambda x : x['$date'])
-    df=df[['idx', 'TimeStamp',
+    df=df[['TimeStamp',
             'All_Mold_Number', 'Injection_Time', 'Machine_Process_Time',
             'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring', 'Product_Process_Time', 'Reservation_Mold_Number',
             'Screw_Position', 'Weighing_Speed',
