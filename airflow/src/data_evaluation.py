@@ -103,7 +103,6 @@ def data_eval():
     df = moldset_df
 
     df = df.drop(['_id'],axis=1)
-    idx = df.pop('idx')
     y = df.pop('Class')
     dt = pd.to_datetime(df.pop('TimeStamp'))
 
