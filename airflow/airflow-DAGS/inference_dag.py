@@ -364,7 +364,7 @@ def push_onpremise():
             print("mongo connection failer during pull",e)
         print(df)
         client.close()
-        if len(list(df.clone()))==0:
+        if df.shape[0]==0:
             print("empty")
             break
         df=df.drop_duplicates(subset=["_id"])
