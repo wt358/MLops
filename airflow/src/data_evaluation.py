@@ -114,10 +114,11 @@ def data_eval():
 
     logging.info('########## Train & Evaluate data ##########')
     """수정사항: 예외처리 -> train_data에 라벨이 1가지인 경우(불량이 없는 경우) -> 학습 불가능"""
-    try:
-        y.value_counts().shape[0] == 2
+    if y.value_counts().shape[0] == 2:
+        pass
     except:
         logging.info('########## Cannot find anomalies ##########')
+        break
             
     names = [
         "Nearest Neighbors",
