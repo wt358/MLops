@@ -118,7 +118,7 @@ def data_eval():
         pass
     else:
         logging.info('########## Cannot find anomalies ##########')
-        break
+        return 1
             
     names = [
         "Nearest Neighbors",

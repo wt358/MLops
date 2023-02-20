@@ -362,9 +362,11 @@ def push_onpremise():
             df = pd.DataFrame(list(collection.find(query)))
         except Exception as e:
             print("mongo connection failer during pull",e)
-        print(df) 
+        print(df)
         client.close()
-        
+        if len(list(df.clone()))==0:
+            print("empty")
+            break
         df=df.drop_duplicates(subset=["_id"])
         df.drop(columns={'_id'},inplace=True)
 
