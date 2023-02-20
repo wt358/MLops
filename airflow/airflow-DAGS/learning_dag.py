@@ -198,11 +198,11 @@ def which_path():
     client.close()
   
 #   if '9000a' in mode_machine_name:
-  if True:
-    task_id = 'path_main'
-  else:
-    task_id = 'path_vari'
-  return task_id
+    if True:
+        task_id = 'path_main'
+    else:
+        task_id = 'path_vari'
+    return task_id
 
 start = DummyOperator(task_id="start", dag=dag)
 
