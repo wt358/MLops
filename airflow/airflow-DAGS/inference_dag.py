@@ -447,6 +447,7 @@ with DAG(
         owner="coops2",
         retries=0,
         retry_delay=timedelta(minutes=1),
+        trigger_rule=none_failed_min_one_success,
     )
     main_or_vari = BranchPythonOperator(
         task_id = 'branch',
@@ -536,6 +537,6 @@ with DAG(
 
         elif path == 'path_vari':
             # main_or_vari>>t>>infer_tadgan
-            main_or_vari>>t>>infer_svm
+            main_or_vari>>t>>infer_svm >> t2
 
 
