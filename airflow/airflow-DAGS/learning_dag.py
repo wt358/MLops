@@ -16,7 +16,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING, DESCENDING
 import pandas as pd
 
 gpu_tag='0.14'
