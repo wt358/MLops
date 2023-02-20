@@ -107,7 +107,7 @@ secret_volume = Secret(
         # Path where we mount the secret as volume
         deploy_target='/var/secrets/db',
         # Name of Kubernetes Secret
-        secret='db-secret-hk8b2hk77m',
+        secrey='db-secret-hk8b2hk77m',
         # Key in the form of service account file name
         key='mongo-url-secret.json')
 secret_all = Secret('env', None, 'db-secret-hk8b2hk77m')
@@ -345,7 +345,7 @@ def push_onpremise():
     model_names = ['LSTM_autoencoder','OC_SVM']
     
     now=datetime.now()
-    start=now-timedelta(days=60)
+    start=now-timedelta(days=50)
     for model_name in model_names:
             
         host = Variable.get("MONGO_URL_SECRET")

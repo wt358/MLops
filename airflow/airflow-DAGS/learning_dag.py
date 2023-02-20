@@ -139,24 +139,26 @@ cpu_aff={
 
 paths=['path_main','path_vari']
 
-def print_rank(df,i,machine_no):
+def print_stat(df,i):
     today=pd.Timestamp.today()
     date_1month=(today- pd.DateOffset(months=i)).strftime('%Y-%m-%d %I:%M:%S')
     today=datetime.now().strftime("%Y-%m-%d")
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
-    db_rank= client['rank']
-    collection = db_rank[f'teng_{machine_no}_{i}_{today}']
-
-    df2=df[df['TimeStamp'] > date_1month ]['Additional_Info_1'].value_counts()
-    df1=df2.rank(method='min',ascending=False)
-    print("\n",i,"month rank")
+    db_rank= client['stat']
+    collection = db_rank[f'teng_{i}month_{today}']
+    collection.create_index([("Today",ASCENDING),("Feature",ASCENDING)],unique=True)
+    df2=df[df['TimeStamp'] > date_1month ]
+    print(df2)
+    print("\n",i,"month statistics")
     print("====================================")
-    df1=df1.rename("rank")
-    df2=df2.rename("count")
-    df_new=pd.concat([df1,df2],axis=1).reset_index()
-    print(df_new)
-    data=df_new.to_dict('records')
+    stat_df=df2.drop(columns={'TimeStamp'}).describe().T
+    stat_df.reset_index(inplace=True)
+    stat_df=stat_df.rename(columns={'index':'Feature'})
+    print(stat_df)
+    
+    stat_df['Today']=today
+    data=stat_df.to_dict('records')
     try:
         collection.insert_many(data,ordered=False)
     except Exception as e:
@@ -167,52 +169,33 @@ def print_rank(df,i,machine_no):
 
 
 def which_path():
-  '''
-  return the task_id which to be executed
-  '''
-#   host = Variable.get("MS_HOST")
-#   database = Variable.get("MS_DATABASE")
-#   username = Variable.get("MS_USERNAME")
-#   password = Variable.get("MS_PASSWORD")
-
-#   query = text(
-#       "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(day,-7,GETDATE())"
-#       )
-#   query1 = text(
-#       "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(month,-6,GETDATE())"
-#       )
-#   conection_url = sqlalchemy.engine.url.URL(
-#       drivername="mssql+pymssql",
-#       username=username,
-#       password=password,
-#       host=host,
-#       database=database,
-#   )
-#   engine = create_engine(conection_url, echo=True)
+    '''
+    return the task_id which to be executed
+    '''
+    host=Variable.get("MONGO_URL_SECRET")
+    client=MongoClient(host)
+    db=client["raw_data"]
+    collection=db["network_mold_data"]
   
-#   sql_result_pd = pd.read_sql_query(query, engine)
-#   mode_machine_name=sql_result_pd['Additional_Info_1'].value_counts().idxmax()
-#   print(sql_result_pd['Additional_Info_1'].value_counts())
-#   print(mode_machine_name)
-  
-#   sql_result = engine.execute(query1)
-#   sql_result_pd = pd.read_sql_query(query1, engine)
-
-#   sql_result_pd = sql_result_pd[sql_result_pd['Machine_Name'] != '7']
-#   sql_result_pd = sql_result_pd[sql_result_pd['Machine_Name'] != '6i']
-#   sql_result_pd_6 = sql_result_pd[sql_result_pd['Machine_Name'] != '']
-#   sql_result_pd_25 = sql_result_pd[sql_result_pd['Machine_Name'] == '']
-# #   month_list = [1, 3, 6]
-#   month_list = [6]
-#   print("======================================================")
-#   print("  6호기")
-#   for i in month_list:
-#       print_rank(sql_result_pd_6, i,6)
-#   print("======================================================")
-#   print("  25호기")
-#   for i in month_list:
-#       print_rank(sql_result_pd_25, i,25)
-#   print("======================================================")
+    now=datetime.now()
+    start=now-timedelta(days=183)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                '$lt':now
+                }
+            }
+    try:
+        df = pd.DataFrame(list(collection.find(query)))
+    except Exception as e:
+        print("mongo connection failer during pull",e)
+    month_list = [1,6]
+    print("======================================================")
+    print("  6호기")
+    for i in month_list:
+        print_stat(df, i)
+    print("======================================================")
+    client.close()
   
 #   if '9000a' in mode_machine_name:
   if True:
