@@ -33,7 +33,7 @@ def pull_influx():
     token = Variable.get("INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("INFLUX_URL")
-    start_date="-30d"
+    start_date="-50d"
 
     client = influxdb_client.InfluxDBClient(
     url=url,
@@ -94,7 +94,7 @@ def pull_transform():
     db_test = client['raw_data']
     collection_test1 = db_test['network_mold_data']
     now = datetime.now()
-    start = now - timedelta(days=30)
+    start = now - timedelta(days=50)
     print(start)
     query={
             '_time':{

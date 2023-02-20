@@ -1133,7 +1133,7 @@ if __name__ == "__main__":
         print("entering inference main product ")
         infer_main()
     elif sys.argv[1] == 'infer_ocsvm':
-        print("entering inference main product ")
+        print("entering inference vari product ")
         infer_ocsvm()
     print("hello main")
  
