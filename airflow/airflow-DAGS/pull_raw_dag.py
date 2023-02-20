@@ -72,10 +72,12 @@ def pull_influx():
 
     db_test = client['raw_data']
     collection_test1 = db_test['network_mold_data']
+    collection_test1.create_index([("_time",pymongo.ASCENDING)],unique=True)
     try:
-        for row in data:
-            uniq=row['_time']
-            result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
+        # for row in data:
+        #     uniq=row['_time']
+        #     result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
+        result = collection_test1.insert_many(data,ordered=False)
     except Exception as e:
         print("mongo connection failed")
         print(e)
@@ -181,20 +183,24 @@ def pull_transform():
     db_test = client['etl_data']
     factory_name='teng'
     collection_aug=db_test[f'etl_{factory_name}']
+    collection_aug.create_index([("_time",pymongo.ASCENDING)],unique=True)
     data=df.to_dict('records')
     # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
     try:
-        for row in data:
-            uniq=row['_time']
-            result = collection_aug.update_one({'idx':uniq},{"$set":row},upsert=True)
+        # for row in data:
+        #     uniq=row['_time']
+        #     result = collection_aug.update_one({'idx':uniq},{"$set":row},upsert=True)
+        result = collection_aug.insert_many(data,ordered=False)
     except Exception as e: 
         print("mongo connection failed")
         print(e)
     collection_aug=db_test[f'test_{factory_name}']
+    collection_aug.create_index([("_time",pymongo.ASCENDING)],unique=True)
     try:
-        for row in data:
-            uniq=row['_time']
-            result = collection_aug.update_one({'idx':uniq},{"$set":row},upsert=True)
+        # for row in data:
+        #     uniq=row['_time']
+        #     result = collection_aug.update_one({'idx':uniq},{"$set":row},upsert=True)
+        result = collection_aug.insert_many(data,ordered=False)
     except Exception as e: 
         print("mongo connection failed")
         print(e)
