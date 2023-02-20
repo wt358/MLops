@@ -149,7 +149,6 @@ def infer_ocsvm():
         print("empty queue")
         return
     # dataframe transform
-    df=df[df['idx']!='idx']
     print(df.shape)
     print(df.columns)
     print(df)
@@ -158,8 +157,8 @@ def infer_ocsvm():
         },inplace=True)
     
     df.rename(columns={'_time':'TimeStamp'},inplace=True)
-    df['idx']=df['idx'].apply(lambda x : x['$date'])
-    df['idx']=df['idx'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
+    df['TimeStamp']=df['TimeStamp'].apply(lambda x : x['$date'])
+    df['TimeStamp']=df['TimeStamp'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
     print(df)
 
     important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
@@ -232,7 +231,7 @@ def infer_ocsvm():
     
     print(y_test)
     y_log = pd.DataFrame(index=df.index)
-    y_log['TimeStamp']=df['idx']
+    y_log['TimeStamp']=df['TimeStamp']
     y_log['Anomaly']=y_test
     # outliers = outliers.to_numpy()
     # y_test = y_test.to_numpy()
@@ -323,7 +322,6 @@ def infer_lstm():
         print("empty queue")
         return
     # dataframe transform
-    df=df[df['idx']!='idx']
     print(df.shape)
     print(df.columns)
     print(df)
@@ -332,8 +330,8 @@ def infer_lstm():
         },inplace=True)
     
     df.rename(columns={'_time':'TimeStamp'},inplace=True)
-    df['idx']=df['idx'].apply(lambda x : x['$date'])
-    df['idx']=df['idx'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
+    df['TimeStamp']=df['TimeStamp'].apply(lambda x : x['$date'])
+    df['TimeStamp']=df['TimeStamp'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
     print(df)
 
     important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
@@ -410,7 +408,7 @@ def infer_lstm():
     
     scored = pd.DataFrame(index=test.index)
     Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
-    scored['TimeStamp'] = df['idx']
+    scored['TimeStamp'] = df['TimeStamp']
     scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
     scored['Threshold'] = 0.1
     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
