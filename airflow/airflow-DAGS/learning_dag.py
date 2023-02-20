@@ -150,6 +150,10 @@ def print_stat(df,i):
     collection.create_index([("Today",ASCENDING),("Feature",ASCENDING)],unique=True)
     
     print(df)
+    df.drop(columns={'_id','_time','result','_measurement','table','_start','_stop'},inplace=True)
+    df.rename(columns={"idx":"_time"},inplace=True)
+    print(df)
+    
     
     df2=df[df['_time'] > date_1month ]
     print(df2)
