@@ -157,6 +157,9 @@ def print_stat(df,i):
     
     df2=df[df['_time'] > date_1month ]
     print(df2)
+    if df2.empty:
+        print(f"there is no data in {i} month")
+        return 1
     print("\n",i,"month statistics")
     print("====================================")
     stat_df=df2.drop(columns={'_time'}).describe().T
