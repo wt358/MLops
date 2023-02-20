@@ -73,7 +73,7 @@ from collections import Counter
 from kafka import KafkaConsumer
 from kafka import KafkaProducer
 
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING, DESCENDING
 
 import sqlalchemy
 from sqlalchemy import create_engine

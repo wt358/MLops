@@ -340,5 +340,6 @@ for path in paths:
         after_aug >> [run_svm, run_lstm] >> after_ml
         after_aug >> run_eval
     elif path == 'path_vari':
-        main_or_vari >> t >> run_tadgan
+        # main_or_vari >> t >> run_tadgan
+        main_or_vari >> t 
         
