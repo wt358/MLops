@@ -434,6 +434,7 @@ with DAG(
         python_callable=push_onpremise,
         depends_on_past=True,
         owner="coops2",
+        env={'EXECUTION_DATE':"{{ds}}"},
         retries=0,
         retry_delay=timedelta(minutes=1),
     )
