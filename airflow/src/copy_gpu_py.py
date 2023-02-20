@@ -315,24 +315,28 @@ def iqr_mds_gan():
 
         db_test = client['aug_data']
         factory_name='teng'
-        collection_aug=db_test[f'aug_test_{factory_name}']
+        today1=datetime.today()
+        collection_aug=db_test[f'aug_test_{factory_name}_{today1}']
+        collection_aug.create_index([("TimeStamp",ASCENDING)],unique=True)
         data=Augdata.to_dict('records')
     # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
         try:
-            isData = collection_aug.find_one()
-            if len(isData) !=0:
-                print("collection is not empty")
-                collection_aug.delete_many({})
-            try:
-                result = collection_aug.insert_many(data,ordered=False)
-            except Exception as e:
-                print("mongo connection failed", e)
-        except:
-            print("there is no collection")
-            try:
-                result = collection_aug.insert_many(data,ordered=False)
-            except Exception as e:
-                print("mongo connection failed", e)
+            # isData = collection_aug.find_one()
+            # if len(isData) !=0:
+            #     print("collection is not empty")
+            #     collection_aug.delete_many({})
+            # try:
+            #     result = collection_aug.insert_many(data,ordered=False)
+            # except Exception as e:
+            #     print("mongo connection failed", e)
+            result = collection_aug.insert_many(data,ordered=False)
+        except Exception as e:
+            # print("there is no collection")
+            # try:
+            #     result = collection_aug.insert_many(data,ordered=False)
+            # except Exception as e:
+            #     print("mongo connection failed", e)
+            print("mongo connection failed", e)
         client.close()
     print("hello")
 
@@ -346,7 +350,8 @@ def oc_svm():
     client = MongoClient(host)
     
     db_test = client['aug_data']
-    collection_aug=db_test['aug_test_teng']
+    today1=datetime.today()
+    collection_aug=db_test[f'aug_test_teng_{today1}']
     
     try:
         moldset_df = pd.DataFrame(list(collection_aug.find()))
