@@ -90,7 +90,8 @@ def data_eval():
     host = os.environ['MONGO_URL_SECRET'] 
     client = MongoClient(host)
     db_test = client['aug_data']
-    collection_aug=db_test['aug_test_teng']
+    today1=datetime.now().strftime("%Y-%m-%d")
+    collection_aug=db_test[f'aug_test_teng_{today1}']
     try:
         moldset_df = pd.DataFrame(list(collection_aug.find()))
     except:
