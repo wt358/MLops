@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 
 import influxdb_client
 import csv
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING, DESCENDING
 import pandas as pd
 import os
 
