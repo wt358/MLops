@@ -241,6 +241,7 @@ def infer_ocsvm():
     # (tn, fp, fn, tp) = cf.flatten()
     db_test = client['result_log']
     collection = db_test[f'log_{model_name}_teng']
+    collection.create_index([("TimeStamp",ASCENDING)],unique=True)
     #data=scored.to_dict('records')
     data=y_log.to_dict('records')
 
@@ -416,6 +417,7 @@ def infer_lstm():
 
     db_test = client['result_log']
     collection = db_test[f'log_{model_name}_teng']
+    collection.create_index([("TimeStamp",ASCENDING)],unique=True)
     #data=scored.to_dict('records')
     data=scored.to_dict('records')
 

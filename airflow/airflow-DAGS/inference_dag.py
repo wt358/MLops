@@ -366,7 +366,7 @@ def push_onpremise():
         client = MongoClient(host)
         db_model = client['result_log']
         collection=db_model[f'teng_{model_name}']
-        
+        collection.create_index([("TimeStamp",ASCENDING)],unique=True)
         data=df.to_dict('records')
 
         try:
@@ -521,9 +521,10 @@ with DAG(
         
         if path == 'path_main':
             # main_or_vari>>t>>infer_main 
-            main_or_vari>>t>>[infer_main,infer_svm] >> t2
+            main_or_vari>>t>>infer_main >> t2
 
         elif path == 'path_vari':
-            main_or_vari>>t>>infer_tadgan
+            # main_or_vari>>t>>infer_tadgan
+            main_or_vari>>t>>infer_svm
 
 
