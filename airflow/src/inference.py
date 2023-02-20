@@ -231,7 +231,7 @@ def infer_ocsvm():
     
     print(y_test)
     y_log = pd.DataFrame(index=df.index)
-    y_log['TimeStamp']=df['TimeStamp']
+    y_log['TimeStamp']=pd.to_datetime(df['TimeStamp'])
     y_log['Anomaly']=y_test
     # outliers = outliers.to_numpy()
     # y_test = y_test.to_numpy()
@@ -408,7 +408,7 @@ def infer_lstm():
     
     scored = pd.DataFrame(index=test.index)
     Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
-    scored['TimeStamp'] = df['TimeStamp']
+    scored['TimeStamp'] = pd.to_datetime(df['TimeStamp'])
     scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
     scored['Threshold'] = 0.1
     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
