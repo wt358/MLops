@@ -196,7 +196,6 @@ def which_path():
         print_stat(df, i)
     print("======================================================")
     client.close()
-  
 #   if '9000a' in mode_machine_name:
     if True:
         task_id = 'path_main'
