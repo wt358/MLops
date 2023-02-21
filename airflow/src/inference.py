@@ -410,14 +410,15 @@ def infer_lstm():
     Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
     scored['TimeStamp'] = pd.to_datetime(df['TimeStamp'])
     scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
-    mean=np.mean(scored['Loss_mae'],axis=0)
-    std=np.cov(scored['Loss_mae'])
+    loss_list=np.abs(X_pred-Xtest)
+    mean=np.mean(loss_list,axis=0)
+    std=np.cov(loss_list.T)
     print(mean)
     print(std)
-    
+    x=scored['Loss_mae']-mean
     # print(np.matmul(x,std))
     
-    scored['Anomaly_Score']=(np.abs(scored['Loss_mae']-mean)/(std)**(1/2))
+    scored['Anomaly_Score']=np.matmul(np.matmul(x,std),x.T)
     scored['Threshold'] = 0.1
     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
     print(scored.head())
