@@ -418,8 +418,9 @@ def infer_lstm():
     print(mean)
     print(std)
     x=loss_list-mean
+    print(x)
     # print(np.matmul(x,std))
-    
+    print(np.mean(np.matmul(np.matmul(x,std),x.T),axis=1))
     scored['Anomaly_Score']=np.mean(np.matmul(np.matmul(x,std),x.T),axis=1)
     scored['Threshold'] = 0.1
     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
