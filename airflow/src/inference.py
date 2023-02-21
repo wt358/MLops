@@ -411,8 +411,8 @@ def infer_lstm():
     scored['TimeStamp'] = pd.to_datetime(df['TimeStamp'])
     scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
     
-    mean=np.mean(scored['Loss_mae'],axis=0)
-    std=np.cov(scored['Loss_mae'].T)
+    mean=np.mean(scored['Loss_mae'],axis=1)
+    std=np.cov(scored['Loss_mae'])
     print(mean)
     print(std)
     
