@@ -415,7 +415,7 @@ def infer_lstm():
     std=np.cov(loss_list.T)
     print(mean)
     print(std)
-    x=scored['Loss_mae']-mean
+    x=loss_list-mean
     # print(np.matmul(x,std))
     
     scored['Anomaly_Score']=np.matmul(np.matmul(x,std),x.T)
