@@ -425,7 +425,7 @@ def infer_lstm():
     print(np.dot(temp1,x.T))
     
     print(np.mean(np.dot(np.dot(x,std),x.T),axis=0))
-    scored['Anomaly_Score']=np.mean(np.dot(np.dot(x,std),x.T),axis=0)
+    scored['Anomaly_Score']=np.sum(np.dot(np.dot(x,std),x.T),axis=0)
     scored['Threshold'] = 0.1
     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
     print(scored.head())
