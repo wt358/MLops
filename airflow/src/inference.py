@@ -430,7 +430,7 @@ def infer_lstm():
     print(np.sum(np.abs(np.dot(np.dot(x,std),x.T)),axis=1))
     print(np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1))
     scaler_minmax=MinMaxScaler()
-    new_df=np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1).resahpe(-1,1)
+    new_df=np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1).reshape(-1,1)
     scaler_minmax.fit(new_df)
     data_scaler=scaler_minmax.transform(new_df)
     print(data_scaler)
