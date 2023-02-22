@@ -435,7 +435,7 @@ def infer_lstm():
     data_scaler1=scaler_minmax.transform(new_df)
     scaler_minmax=MinMaxScaler()
     scaler_minmax.fit(new_df)
-    data_scaler2=scaler_minmax.transform(new_df)
+    data_scaler2=np.abs(scaler_minmax.transform(new_df))
 
     # print(data_scaler)
     scored['Anomaly_Score_standard']=data_scaler1
