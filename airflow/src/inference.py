@@ -429,12 +429,17 @@ def infer_lstm():
     print(np.sum(np.dot(np.dot(x,std),x.T),axis=1))
     print(np.sum(np.abs(np.dot(np.dot(x,std),x.T)),axis=1))
     print(np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1))
-    scaler_minmax=StandardScaler()
     new_df=np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1).reshape(-1,1)
+    scaler_minmax=StandardScaler()
     scaler_minmax.fit(new_df)
-    data_scaler=scaler_minmax.transform(new_df)
+    data_scaler1=scaler_minmax.transform(new_df)
+    scaler_minmax=MinMaxScaler()
+    scaler_minmax.fit(new_df)
+    data_scaler2=scaler_minmax.transform(new_df)
+
     print(data_scaler)
-    scored['Anomaly_Score']=np.sum(np.dot(np.dot(x,std),x.T),axis=0)
+    scored['Anomaly_Score_standard']=data_scaler1
+    scored['Anomaly_Score_minmax']=data_scaler2
     scored['Threshold'] = 0.1
     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
     print(scored.head())
