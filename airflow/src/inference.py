@@ -420,15 +420,15 @@ def infer_lstm():
     x=loss_list-mean
     print(x)
     # print(np.matmul(x,std))
-    print(np.dot(x,std))
-    temp1=np.dot(x,std)
-    print(np.dot(temp1,x.T))
-    print(np.sum(np.dot(np.dot(x,std),x.T),axis=0))
-    print(np.sum(np.abs(np.dot(np.dot(x,std),x.T)),axis=0))
-    print(np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=0))
-    print(np.sum(np.dot(np.dot(x,std),x.T),axis=1))
-    print(np.sum(np.abs(np.dot(np.dot(x,std),x.T)),axis=1))
-    print(np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1))
+    # print(np.dot(x,std))
+    # temp1=np.dot(x,std)
+    # print(np.dot(temp1,x.T))
+    # print(np.sum(np.dot(np.dot(x,std),x.T),axis=0))
+    # print(np.sum(np.abs(np.dot(np.dot(x,std),x.T)),axis=0))
+    # print(np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=0))
+    # print(np.sum(np.dot(np.dot(x,std),x.T),axis=1))
+    # print(np.sum(np.abs(np.dot(np.dot(x,std),x.T)),axis=1))
+    # print(np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1))
     new_df=np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1).reshape(-1,1)
     scaler_minmax=StandardScaler()
     scaler_minmax.fit(new_df)
@@ -438,6 +438,8 @@ def infer_lstm():
     data_scaler2=scaler_minmax.transform(new_df)
 
     # print(data_scaler)
+    scored['Pred']=X_pred
+    scored['Test']=X_test
     scored['Anomaly_Score_standard']=data_scaler1
     scored['Anomaly_Score_minmax']=data_scaler2
     scored['Threshold'] = 0.1
