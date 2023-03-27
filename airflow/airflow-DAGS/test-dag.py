@@ -60,7 +60,8 @@ with DAG(
     # Generate 5 sleeping tasks, sleeping from 0.0 to 0.4 seconds respectively
     for i in molding_brand_name:
         brand_name=i.lower()
-        fact_list=eval(brand_name)
+        fact=eval(brand_name)
+        fact_list=f'{fact}_factory_name'
         for j in fact_list:
             task = PythonOperator(
                 task_id='sleep_for_' + i + '_' + j,
