@@ -237,41 +237,40 @@ with DAG(
         i=i.lower()
         fact=f'{i}_factory_name'
         fact_list=eval(fact)
-        for j in fact_list:
-            sleep_task = PythonOperator(
-                task_id="sleep_60s"+ i + '_' + j,
-                python_callable=wait_kafka,
-                depends_on_past=True,
-                owner="coops2",
-                retries=0,
-                retry_delay=timedelta(minutes=1),
-            )
+        sleep_task = PythonOperator(
+            task_id="sleep_60s"+ i,
+            python_callable=wait_kafka,
+            depends_on_past=True,
+            owner="coops2",
+            retries=0,
+            retry_delay=timedelta(minutes=1),
+        )
 
-            t1 = PythonOperator(
-                task_id="pull_influx"+ i + '_' + j,
-                python_callable=pull_influx,
-                depends_on_past=True,
-                owner="coops2",
-                retries=0,
-                retry_delay=timedelta(minutes=1),
-            )
+        t1 = PythonOperator(
+            task_id="pull_influx"+ i ,
+            python_callable=pull_influx,
+            depends_on_past=True,
+            owner="coops2",
+            retries=0,
+            retry_delay=timedelta(minutes=1),
+        )
 
-            
-            t3 = PythonOperator(
-                task_id="pull_transform"+ i + '_' + j,
-                python_callable=pull_transform,
-                depends_on_past=True,
-                owner="coops2",
-                retries=0,
-                retry_delay=timedelta(minutes=1),
-            )
         
-
-            dummy2 = DummyOperator(task_id="path2"+ i + '_' + j,trigger_rule=TriggerRule.NONE_FAILED)
-            
-    # 테스크 순서를 정합니다.
-    # t1 실행 후 t2를 실행합니다.
+        t3 = PythonOperator(
+            task_id="pull_transform"+ i,
+            python_callable=pull_transform,
+            depends_on_past=True,
+            owner="coops2",
+            retries=0,
+            retry_delay=timedelta(minutes=1),
+        )
     
-            dummy1 >> t1>> dummy2
 
-            dummy2 >> t3 >> sleep_task 
+        dummy2 = DummyOperator(task_id="path2"+ i,trigger_rule=TriggerRule.NONE_FAILED)
+        
+# 테스크 순서를 정합니다.
+# t1 실행 후 t2를 실행합니다.
+
+        dummy1 >> t1>> dummy2
+
+        dummy2 >> t3 >> sleep_task 
