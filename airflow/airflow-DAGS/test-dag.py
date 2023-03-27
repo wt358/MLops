@@ -37,16 +37,20 @@ with DAG(
     # [END howto_operator_python]
 
     # [START howto_operator_python_kwargs]
-    def my_sleeping_function(random_base):
+    def my_sleeping_function(brand_name):
         """This is a function that will run within the DAG execution"""
-        print(random_base)
+        
+        print(brand_name)
+        list_name=f'{brand_name}_factory_name'
+        print(eval(list_name))    
+            
 
     # Generate 5 sleeping tasks, sleeping from 0.0 to 0.4 seconds respectively
     for i in molding_brand_name:
         task = PythonOperator(
             task_id='sleep_for_' + i,
             python_callable=my_sleeping_function,
-            op_kwargs={'random_base': i + 'brand' },
+            op_kwargs={'brand_name': i.lower()},
         )
 
         run_this >> task
