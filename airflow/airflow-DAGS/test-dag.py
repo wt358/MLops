@@ -6,6 +6,11 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator, PythonVirtualenvOperator
 from airflow.utils.dates import days_ago
 
+molding_brand_name = ['WooJin', 'DongShin']
+woojin_factory_name = ['NewSeoGwang', ]
+dongshin_factory_name = ['teng', ]
+
+
 args = {
     'owner': 'airflow',
 }
@@ -34,14 +39,14 @@ with DAG(
     # [START howto_operator_python_kwargs]
     def my_sleeping_function(random_base):
         """This is a function that will run within the DAG execution"""
-        time.sleep(random_base)
+        print(random_base)
 
     # Generate 5 sleeping tasks, sleeping from 0.0 to 0.4 seconds respectively
-    for i in range(5):
+    for i in molding_brand_name:
         task = PythonOperator(
-            task_id='sleep_for_' + str(i),
+            task_id='sleep_for_' + i,
             python_callable=my_sleeping_function,
-            op_kwargs={'random_base': float(i) / 10},
+            op_kwargs={'random_base': i + 'brand' },
         )
 
         run_this >> task
