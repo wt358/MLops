@@ -241,7 +241,8 @@ with DAG(
         sleep_task = PythonOperator(
             task_id="sleep_60s"+ i,
             python_callable=wait_kafka,
-            depends_on_past=True,
+            # depends_on_past=True,
+            depends_on_past=False,
             owner="coops2",
             retries=0,
             retry_delay=timedelta(minutes=1),
@@ -250,7 +251,8 @@ with DAG(
         t1 = PythonOperator(
             task_id="pull_influx"+ i ,
             python_callable=pull_influx,
-            depends_on_past=True,
+            # depends_on_past=True,
+            depends_on_past=False,
             owner="coops2",
             retries=0,
             retry_delay=timedelta(minutes=1),
@@ -260,7 +262,7 @@ with DAG(
         t3 = PythonOperator(
             task_id="pull_transform"+ i,
             python_callable=pull_transform,
-            depends_on_past=True,
+            depends_on_past=False,
             owner="coops2",
             retries=0,
             retry_delay=timedelta(minutes=1),
