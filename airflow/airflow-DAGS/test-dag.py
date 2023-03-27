@@ -7,8 +7,8 @@ from airflow.operators.python import PythonOperator, PythonVirtualenvOperator
 from airflow.utils.dates import days_ago
 
 molding_brand_name = ['WooJin', 'DongShin']
-woojin_factory_name = ['NewSeoGwang', 'saasdfq','aaaa']
-dongshin_factory_name = ['teng', 'sdfsdf1' ,'sdfsdfaq']
+woojin_factory_name = ['NewSeoGwang', 'saasdfq']
+dongshin_factory_name = ['teng', 'sdfsdf1','333' ]
 
 
 args = {
@@ -44,29 +44,29 @@ with DAG(
     def NewSeoGwang_func():
         print('congratul!')
     
-    def my_sleeping_function(brand_name):
+    def my_sleeping_function(**kwargs):
         """This is a function that will run within the DAG execution"""
-        print(brand_name)
-        list_name=f'{brand_name}_factory_name'
-        fact_list=eval(list_name)
-        for factory in fact_list:
-            print(factory)
-            func=f'{factory}_func'
-            try:
-                eval(func)()
-            except Exception as e:
-                print(e)
-                print(func)
+        brand_name=kwargs['brand_name']
+        factory_name=kwargs['factory_name']
+        func=f'{factory_name}_func'
+        try:
+            eval(func)()
+        except Exception as e:
+            print(e)
+            print(func)
     
             
 
     # Generate 5 sleeping tasks, sleeping from 0.0 to 0.4 seconds respectively
     for i in molding_brand_name:
-        task = PythonOperator(
-            task_id='sleep_for_' + i,
-            python_callable=my_sleeping_function,
-            op_kwargs={'brand_name': i.lower()},
-        )
+        brand_name=i.lower()
+        fact_list=eval(brand_name)
+        for j in fact_list:
+            task = PythonOperator(
+                task_id='sleep_for_' + i + '_' + j,
+                python_callable=my_sleeping_function,
+                op_kwargs={'brand_name': brand_name, 'factory_name':j},
+            )
 
         run_this >> task
     # [END howto_operator_python_kwargs]
