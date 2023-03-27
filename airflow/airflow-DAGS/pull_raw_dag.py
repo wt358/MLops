@@ -232,6 +232,7 @@ with DAG(
 #    retries=3, # 이 테스크가 실패한 경우, 3번 재시도 합니다.
 #    retry_delay=timedelta(minutes=5), # 재시도하는 시간 간격은 5분입니다.
 #)
+    dummy1 = DummyOperator(task_id="path1")
     for i in molding_brand_name:
         i=i.lower()
         fact=f'{i}_factory_name'
@@ -266,7 +267,6 @@ with DAG(
             )
         
 
-            dummy1 = DummyOperator(task_id="path1")
             dummy2 = DummyOperator(task_id="path2"+ i + '_' + j,trigger_rule=TriggerRule.NONE_FAILED)
             
     # 테스크 순서를 정합니다.
