@@ -68,8 +68,7 @@ with DAG(
                 python_callable=my_sleeping_function,
                 op_kwargs={'brand_name': brand_name, 'factory_name':j},
             )
-
-        run_this >> task
+            run_this >> task
     # [END howto_operator_python_kwargs]
 
     # [START howto_operator_python_venv]
