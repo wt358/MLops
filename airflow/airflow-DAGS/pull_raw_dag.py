@@ -25,7 +25,8 @@ from sqlalchemy.sql import text
 
 from pattern_extract import *
 
-molding_brand_name = ['WooJin', 'DongShin']
+# molding_brand_name = ['WooJin', 'DongShin']
+molding_brand_name = ['WooJin' ]
 woojin_factory_name = ['NewSeoGwang', 'saasdfq']
 dongshin_factory_name = ['teng', 'sdfsdf1','333' ]
 
