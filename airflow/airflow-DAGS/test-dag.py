@@ -37,14 +37,27 @@ with DAG(
     # [END howto_operator_python]
 
     # [START howto_operator_python_kwargs]
+    
+    def teng_func():
+        print('congratulations!!')
+        
+    def NewSeoGwang_func():
+        print('congratul!')
+    
     def my_sleeping_function(brand_name):
         """This is a function that will run within the DAG execution"""
-        
         print(brand_name)
         list_name=f'{brand_name}_factory_name'
         fact_list=eval(list_name)
         for factory in fact_list:
             print(factory)
+            func=f'{factory}_func'
+            try:
+                eval(func)()
+            except Exception as e:
+                print(e)
+                print(func)
+    
             
 
     # Generate 5 sleeping tasks, sleeping from 0.0 to 0.4 seconds respectively
