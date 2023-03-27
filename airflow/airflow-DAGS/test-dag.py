@@ -7,8 +7,8 @@ from airflow.operators.python import PythonOperator, PythonVirtualenvOperator
 from airflow.utils.dates import days_ago
 
 molding_brand_name = ['WooJin', 'DongShin']
-woojin_factory_name = ['NewSeoGwang', ]
-dongshin_factory_name = ['teng', ]
+woojin_factory_name = ['NewSeoGwang', 'saasdfq','aaaa']
+dongshin_factory_name = ['teng', 'sdfsdf1' ,'sdfsdfaq']
 
 
 args = {
@@ -42,7 +42,9 @@ with DAG(
         
         print(brand_name)
         list_name=f'{brand_name}_factory_name'
-        print(eval(list_name))    
+        fact_list=eval(list_name)
+        for factory in fact_list:
+            print(factory)
             
 
     # Generate 5 sleeping tasks, sleeping from 0.0 to 0.4 seconds respectively
