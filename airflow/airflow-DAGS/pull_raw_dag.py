@@ -266,7 +266,7 @@ with DAG(
             )
         
 
-            dummy1 = DummyOperator(task_id="path1"+ i + '_' + j)
+            dummy1 = DummyOperator(task_id="path1")
             dummy2 = DummyOperator(task_id="path2"+ i + '_' + j,trigger_rule=TriggerRule.NONE_FAILED)
             
     # 테스크 순서를 정합니다.
