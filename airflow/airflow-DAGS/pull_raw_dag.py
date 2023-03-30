@@ -47,7 +47,8 @@ def pull_influx_woojin(**kwargs):
     )
     
     brand_name=kwargs['brand_name']
-    print(eval(brand_name + "_factory_name"))
+    factorys=eval(brand_name + "_factory_name")
+    print(factorys)
     query_api = client.query_api()
 
     #
@@ -110,7 +111,8 @@ def pull_influx_dongshin(**kwargs):
     )
 
     brand_name=kwargs['brand_name']
-    print(eval(brand_name + "_factory_name"))
+    factorys=eval(brand_name + "_factory_name")
+    print(factorys)
     query_api = client.query_api()
 
     #
@@ -155,7 +157,68 @@ def pull_influx_dongshin(**kwargs):
 
 def wait_kafka():
     time.sleep(30)
+    
+def pull_mssql_woojin():
+    # DB 서버 주소
+    print("hello mssql woojin")
+    host = Variable.get("MS_HOST")
+    # 데이터 베이스 이름
+    database = Variable.get("MS_DATABASE")
+    # 접속 유저명
+    username = Variable.get("MS_USERNAME")
+    # 접속 유저 패스워드
+    password = Variable.get("MS_PASSWORD")
+    #쿼리
+    query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MI,-1440,GETDATE())")
+    # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
+    #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
+    # MSSQL 접속
+    conection_url = sqlalchemy.engine.url.URL(
+        drivername="mssql+pymssql",
+        username=username,
+        password=password,
+        host=host,
+        database=database,
+    )
+    engine = create_engine(conection_url,echo=True)
 
+    #Session 생성
+    #Session = sessionmaker(bind=engine)
+    #ms_session = Session()
+
+    FILENAME = "molding_all.csv"
+
+    sql_result = engine.execute(query)
+    sql_result_pd = pd.read_sql_query(query, engine)
+    sql_result_pd.to_csv(os.path.join(".",FILENAME), index=False)
+    engine.dispose()
+    # for i,row in enumerate(sql_result):
+    #     #print(type(row)) == <class 'sqlalchemy.engine.row.LegacyRow'>
+    #     for column, value in row.items():
+    #         if i > 1:
+    #             break
+    #         print('{0}: {1}'.format(column, value))
+    #         #outcsv.writerow(r)
+
+    print("query result length: " + str(len(list(sql_result))))
+
+    reader = open(FILENAME, 'r')
+    data = csv.DictReader(reader, sql_result.keys())
+
+    host = Variable.get("MONGO_URL_SECRET")
+    client = MongoClient(host)
+
+
+    db_test = client['coops2022']
+    collection_test1 = db_test['molding_data']
+    collection_test2 = db_test['molding_data_new']
+    try:
+        result = collection_test1.insert_many(data)
+        result = collection_test2.insert_many(data)
+    except:
+        print("mongo connection failed")
+    client.close()
+    
 def pull_transform(**kwargs):
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
@@ -330,13 +393,24 @@ with DAG(
             retries=0,
             retry_delay=timedelta(minutes=1),
         )
-    
+        if i == "woojin":
+            t2 = PythonOperator(
+               task_id="pull_mssql",
+                python_callable=eval("pull_mssql_"+ i),
+                depends_on_past=False,
+                owner="coops2",
+                retries=0,
+                retry_delay=timedelta(minutes=1), 
+           ) 
+            dummy1 >> t1,t2>> dummy2
+        else:
+            dummy1 >> t1>> dummy2
+            
 
         dummy2 = DummyOperator(task_id="path2"+ i,trigger_rule=TriggerRule.NONE_FAILED)
         
 # 테스크 순서를 정합니다.
 # t1 실행 후 t2를 실행합니다.
 
-        dummy1 >> t1>> dummy2
 
         dummy2 >> t3 >> sleep_task 
