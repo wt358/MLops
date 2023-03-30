@@ -30,7 +30,7 @@ molding_brand_name = ['WooJin', 'DongShin']
 woojin_factory_name = ['NewSeoGwang', 'saasdfq']
 dongshin_factory_name = ['teng', 'sdfsdf1','333' ]
 
-def pull_influx_woojin():
+def pull_influx_woojin(**kwargs):
     bucket = Variable.get("INFLUX_BUCKET")
     org = Variable.get("INFLUX_ORG")
     token = Variable.get("INFLUX_TOKEN")
@@ -45,7 +45,9 @@ def pull_influx_woojin():
     org=org,
     timeout=500_000
     )
-
+    
+    brand_name=kwargs['brand_name']
+    print(eval(brand_name + "_factory_name"))
     query_api = client.query_api()
 
     #
@@ -92,7 +94,7 @@ def pull_influx_woojin():
 
 # define funcs
 # 이제 여기서 15분마다 실행되게 하고, query find 할때 20분 레인지
-def pull_influx_dongshin():
+def pull_influx_dongshin(**kwargs):
     bucket = Variable.get("INFLUX_BUCKET")
     org = Variable.get("INFLUX_ORG")
     token = Variable.get("INFLUX_TOKEN")
@@ -107,6 +109,8 @@ def pull_influx_dongshin():
     timeout=500_000
     )
 
+    brand_name=kwargs['brand_name']
+    print(eval(brand_name + "_factory_name"))
     query_api = client.query_api()
 
     #
@@ -152,7 +156,7 @@ def pull_influx_dongshin():
 def wait_kafka():
     time.sleep(30)
 
-def pull_transform():
+def pull_transform(**kwargs):
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
 
@@ -310,6 +314,7 @@ with DAG(
         t1 = PythonOperator(
             task_id="pull_influx"+ i ,
             python_callable=eval("pull_influx_"+ i),
+            op_kwargs={'brand_name':i},
             # depends_on_past=True,
             depends_on_past=False,
             owner="coops2",
