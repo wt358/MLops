@@ -393,6 +393,8 @@ with DAG(
             retries=0,
             retry_delay=timedelta(minutes=1),
         )
+        
+        dummy2 = DummyOperator(task_id="path2"+ i,trigger_rule=TriggerRule.NONE_FAILED)
         if i == "woojin":
             t2 = PythonOperator(
                task_id="pull_mssql",
@@ -407,7 +409,6 @@ with DAG(
             dummy1 >> t1>> dummy2
             
 
-        dummy2 = DummyOperator(task_id="path2"+ i,trigger_rule=TriggerRule.NONE_FAILED)
         
 # 테스크 순서를 정합니다.
 # t1 실행 후 t2를 실행합니다.
