@@ -75,6 +75,10 @@ from sqlalchemy.sql import text
 from json import loads
 import random as rn
 
+molding_brand_name = ['WooJin', 'DongShin']
+woojin_factory_name = ['NewSeoGwang', ]
+dongshin_factory_name = ['teng',  ]
+
 gpu_tag='0.14'
 tad_tag='0.01'
 

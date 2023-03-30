@@ -30,10 +30,7 @@ molding_brand_name = ['WooJin', 'DongShin']
 woojin_factory_name = ['NewSeoGwang', 'saasdfq']
 dongshin_factory_name = ['teng', 'sdfsdf1','333' ]
 
-
-# define funcs
-# 이제 여기서 15분마다 실행되게 하고, query find 할때 20분 레인지
-def pull_influx():
+def pull_influx_woojin():
     bucket = Variable.get("INFLUX_BUCKET")
     org = Variable.get("INFLUX_ORG")
     token = Variable.get("INFLUX_TOKEN")
@@ -41,6 +38,68 @@ def pull_influx():
     url= Variable.get("INFLUX_URL")
     start_date="-50d"
 
+    print("WooJin")
+    client = influxdb_client.InfluxDBClient(
+    url=url,
+    token=token,
+    org=org,
+    timeout=500_000
+    )
+
+    query_api = client.query_api()
+
+    #
+    query = f' from(bucket:"{bucket}")\
+    |> range(start: {start_date})\
+    |> filter(fn:(r) => r._measurement == "NetworkInjectionMoldV1")\
+    |> filter(fn:(r) => r._field!= "_measurement")\
+    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
+    '
+    #|> range(start: -2mo)
+    # result = query_api.query(org=org, query=query)
+    # print(result)
+
+
+    influx_df =  query_api.query_data_frame(query=query)
+    print(influx_df)
+    print(influx_df.columns)
+    if len(influx_df) < 1:
+        client.close()
+        return 0
+    influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
+    print(influx_df)
+    client.close()
+    data=influx_df.to_dict('records')
+    host = Variable.get("MONGO_URL_SECRET")
+    client = MongoClient(host)
+
+
+    db_test = client['raw_data']
+    collection_test1 = db_test['network_mold_data']
+    collection_test1.create_index([("_time",ASCENDING)],unique=True)
+    try:
+        # for row in data:
+        #     uniq=row['_time']
+        #     result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
+        result = collection_test1.insert_many(data,ordered=False)
+    except Exception as e:
+        print("mongo connection failed")
+        print(e)
+    client.close()
+    print("hello pull influx")
+
+
+
+# define funcs
+# 이제 여기서 15분마다 실행되게 하고, query find 할때 20분 레인지
+def pull_influx_dongshin():
+    bucket = Variable.get("INFLUX_BUCKET")
+    org = Variable.get("INFLUX_ORG")
+    token = Variable.get("INFLUX_TOKEN")
+    # Store the URL of your InfluxDB instance
+    url= Variable.get("INFLUX_URL")
+    start_date="-50d"
+    print("Dongshin")
     client = influxdb_client.InfluxDBClient(
     url=url,
     token=token,
@@ -250,7 +309,7 @@ with DAG(
 
         t1 = PythonOperator(
             task_id="pull_influx"+ i ,
-            python_callable=pull_influx,
+            python_callable=eval("pull_influx_"+ i),
             # depends_on_past=True,
             depends_on_past=False,
             owner="coops2",
@@ -258,7 +317,6 @@ with DAG(
             retry_delay=timedelta(minutes=1),
         )
 
-        
         t3 = PythonOperator(
             task_id="pull_transform"+ i,
             python_callable=pull_transform,
