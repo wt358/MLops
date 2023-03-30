@@ -397,13 +397,13 @@ with DAG(
         dummy2 = DummyOperator(task_id="path2"+ i,trigger_rule=TriggerRule.NONE_FAILED)
         if i == "woojin":
             t2 = PythonOperator(
-               task_id="pull_mssql",
+               task_id="pull_mssql"+i,
                 python_callable=eval("pull_mssql_"+ i),
                 depends_on_past=False,
                 owner="coops2",
                 retries=0,
                 retry_delay=timedelta(minutes=1), 
-           ) 
+            )
             dummy1 >> t1,t2>> dummy2
         else:
             dummy1 >> t1>> dummy2
