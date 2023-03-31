@@ -212,8 +212,8 @@ def pull_mssql_woojin(**kwargs):
         reader = open(FILENAME, 'r')
         data = csv.DictReader(reader, sql_result.keys())
 
-        host = Variable.get("WOOJIN_MONGO_URL_SECRET")
-        client = MongoClient(host)
+        host_mongo = Variable.get("WOOJIN_MONGO_URL_SECRET")
+        client = MongoClient(host_mongo)
 
 
         db_test = client['raw_data']
@@ -221,8 +221,8 @@ def pull_mssql_woojin(**kwargs):
         collection_test1.create_index([("TimeStamp",ASCENDING)],unique=True)
         try:
             result = collection_test1.insert_many(data)
-        except:
-            print("mongo connection failed")
+        except Exception as e:
+            print("mongo connection failed",e)
         client.close()
     
 def pull_transform(**kwargs):
