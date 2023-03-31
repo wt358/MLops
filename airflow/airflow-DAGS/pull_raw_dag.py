@@ -31,11 +31,11 @@ woojin_factory_name = ['NewSeoGwang', 'saasdfq']
 dongshin_factory_name = ['teng', 'sdfsdf1','333' ]
 
 def pull_influx_woojin(**kwargs):
-    bucket = Variable.get("INFLUX_BUCKET")
-    org = Variable.get("INFLUX_ORG")
-    token = Variable.get("INFLUX_TOKEN")
+    bucket = Variable.get("WOOJIN_INFLUX_BUCKET")
+    org = Variable.get("WOOJIN_INFLUX_ORG")
+    token = Variable.get("WOOJIN_INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
-    url= Variable.get("INFLUX_URL")
+    url= Variable.get("WOOJIN_INFLUX_URL")
     start_date="-50d"
 
     print("WooJin")
@@ -73,7 +73,7 @@ def pull_influx_woojin(**kwargs):
     print(influx_df)
     client.close()
     data=influx_df.to_dict('records')
-    host = Variable.get("MONGO_URL_SECRET")
+    host = Variable.get("WOOJIN_MONGO_URL_SECRET")
     client = MongoClient(host)
 
 
@@ -161,13 +161,13 @@ def wait_kafka():
 def pull_mssql_woojin():
     # DB 서버 주소
     print("hello mssql woojin")
-    host = Variable.get("MS_HOST")
+    host = Variable.get("WOOJIN_MS_HOST")
     # 데이터 베이스 이름
-    database = Variable.get("MS_DATABASE")
+    database = Variable.get("WOOJIN_MS_DATABASE")
     # 접속 유저명
-    username = Variable.get("MS_USERNAME")
+    username = Variable.get("WOOJIN_MS_USERNAME")
     # 접속 유저 패스워드
-    password = Variable.get("MS_PASSWORD")
+    password = Variable.get("WOOJIN_MS_PASSWORD")
     #쿼리
     query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MI,-1440,GETDATE())")
     # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
@@ -211,10 +211,8 @@ def pull_mssql_woojin():
 
     db_test = client['coops2022']
     collection_test1 = db_test['molding_data']
-    collection_test2 = db_test['molding_data_new']
     try:
         result = collection_test1.insert_many(data)
-        result = collection_test2.insert_many(data)
     except:
         print("mongo connection failed")
     client.close()
