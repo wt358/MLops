@@ -71,7 +71,6 @@ def pull_influx_woojin(**kwargs):
         if len(influx_df) < 1:
             client.close()
             return 0
-        influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
         print(influx_df)
         client.close()
         data=influx_df.to_dict('records')
