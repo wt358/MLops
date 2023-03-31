@@ -39,56 +39,58 @@ def pull_influx_woojin(**kwargs):
     start_date="-50d"
 
     print("WooJin")
-    client = influxdb_client.InfluxDBClient(
-    url=url,
-    token=token,
-    org=org,
-    timeout=500_000
-    )
+    
     
     brand_name=kwargs['brand_name']
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
-    query_api = client.query_api()
+    for factory in factorys:
+        client = influxdb_client.InfluxDBClient(
+        url=url,
+        token=token,
+        org=org,
+        timeout=500_000
+        )
+        query_api = client.query_api()
 
-    #
-    query = f' from(bucket:"{bucket}")\
-    |> range(start: {start_date})\
-    |> filter(fn:(r) => r._measurement == "NetworkInjectionMoldV1")\
-    |> filter(fn:(r) => r._field!= "_measurement")\
-    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
-    '
-    #|> range(start: -2mo)
-    # result = query_api.query(org=org, query=query)
-    # print(result)
+        #
+        query = f' from(bucket:"{bucket}")\
+        |> range(start: {start_date})\
+        |> filter(fn:(r) => r._measurement == "CLSeoGwang25HO")\
+        |> filter(fn:(r) => r._field == "Weight" )\
+        |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
+        '
+        #|> range(start: -2mo)
+        # result = query_api.query(org=org, query=query)
+        # print(result)
 
 
-    influx_df =  query_api.query_data_frame(query=query)
-    print(influx_df)
-    print(influx_df.columns)
-    if len(influx_df) < 1:
+        influx_df =  query_api.query_data_frame(query=query)
+        print(influx_df)
+        print(influx_df.columns)
+        if len(influx_df) < 1:
+            client.close()
+            return 0
+        influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
+        print(influx_df)
         client.close()
-        return 0
-    influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
-    print(influx_df)
-    client.close()
-    data=influx_df.to_dict('records')
-    host = Variable.get("WOOJIN_MONGO_URL_SECRET")
-    client = MongoClient(host)
+        data=influx_df.to_dict('records')
+        host = Variable.get("WOOJIN_MONGO_URL_SECRET")
+        client = MongoClient(host)
 
 
-    db_test = client['raw_data']
-    collection_test1 = db_test['network_mold_data']
-    collection_test1.create_index([("_time",ASCENDING)],unique=True)
-    try:
-        # for row in data:
-        #     uniq=row['_time']
-        #     result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
-        result = collection_test1.insert_many(data,ordered=False)
-    except Exception as e:
-        print("mongo connection failed")
-        print(e)
-    client.close()
+        db_test = client['peripheral_data']
+        collection_test1 = db_test[f'{factory}_peripheral_data']
+        collection_test1.create_index([("_time",ASCENDING)],unique=True)
+        try:
+            # for row in data:
+            #     uniq=row['_time']
+            #     result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
+            result = collection_test1.insert_many(data,ordered=False)
+        except Exception as e:
+            print("mongo connection failed")
+            print(e)
+        client.close()
     print("hello pull influx")
 
 
@@ -158,7 +160,7 @@ def pull_influx_dongshin(**kwargs):
 def wait_kafka():
     time.sleep(30)
     
-def pull_mssql_woojin():
+def pull_mssql_woojin(**kwargs):
     # DB 서버 주소
     print("hello mssql woojin")
     host = Variable.get("WOOJIN_MS_HOST")
@@ -169,53 +171,59 @@ def pull_mssql_woojin():
     # 접속 유저 패스워드
     password = Variable.get("WOOJIN_MS_PASSWORD")
     #쿼리
-    query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MI,-1440,GETDATE())")
-    # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
-    #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
-    # MSSQL 접속
-    conection_url = sqlalchemy.engine.url.URL(
-        drivername="mssql+pymssql",
-        username=username,
-        password=password,
-        host=host,
-        database=database,
-    )
-    engine = create_engine(conection_url,echo=True)
+    
+    brand_name=kwargs['brand_name']
+    factorys=eval(brand_name + "_factory_name")
+    print(factorys)
+    for factory in factorys:
+        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MI,-1440,GETDATE())")
+        # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
+        #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
+        # MSSQL 접속
+        conection_url = sqlalchemy.engine.url.URL(
+            drivername="mssql+pymssql",
+            username=username,
+            password=password,
+            host=host,
+            database=database,
+        )
+        engine = create_engine(conection_url,echo=True)
 
-    #Session 생성
-    #Session = sessionmaker(bind=engine)
-    #ms_session = Session()
+        #Session 생성
+        #Session = sessionmaker(bind=engine)
+        #ms_session = Session()
 
-    FILENAME = "molding_all.csv"
+        FILENAME = "molding_all.csv"
 
-    sql_result = engine.execute(query)
-    sql_result_pd = pd.read_sql_query(query, engine)
-    sql_result_pd.to_csv(os.path.join(".",FILENAME), index=False)
-    engine.dispose()
-    # for i,row in enumerate(sql_result):
-    #     #print(type(row)) == <class 'sqlalchemy.engine.row.LegacyRow'>
-    #     for column, value in row.items():
-    #         if i > 1:
-    #             break
-    #         print('{0}: {1}'.format(column, value))
-    #         #outcsv.writerow(r)
+        sql_result = engine.execute(query)
+        sql_result_pd = pd.read_sql_query(query, engine)
+        sql_result_pd.to_csv(os.path.join(".",FILENAME), index=False)
+        engine.dispose()
+        # for i,row in enumerate(sql_result):
+        #     #print(type(row)) == <class 'sqlalchemy.engine.row.LegacyRow'>
+        #     for column, value in row.items():
+        #         if i > 1:
+        #             break
+        #         print('{0}: {1}'.format(column, value))
+        #         #outcsv.writerow(r)
 
-    print("query result length: " + str(len(list(sql_result))))
+        print("query result length: " + str(len(list(sql_result))))
 
-    reader = open(FILENAME, 'r')
-    data = csv.DictReader(reader, sql_result.keys())
+        reader = open(FILENAME, 'r')
+        data = csv.DictReader(reader, sql_result.keys())
 
-    host = Variable.get("MONGO_URL_SECRET")
-    client = MongoClient(host)
+        host = Variable.get("WOOJIN_MONGO_URL_SECRET")
+        client = MongoClient(host)
 
 
-    db_test = client['coops2022']
-    collection_test1 = db_test['molding_data']
-    try:
-        result = collection_test1.insert_many(data)
-    except:
-        print("mongo connection failed")
-    client.close()
+        db_test = client['raw_data']
+        collection_test1 = db_test[f'{factory}_mold_data']
+        collection_test1.create_index([("TimeStamp",ASCENDING)],unique=True)
+        try:
+            result = collection_test1.insert_many(data)
+        except:
+            print("mongo connection failed")
+        client.close()
     
 def pull_transform(**kwargs):
     host = Variable.get("MONGO_URL_SECRET")
@@ -357,11 +365,11 @@ with DAG(
 #    retries=3, # 이 테스크가 실패한 경우, 3번 재시도 합니다.
 #    retry_delay=timedelta(minutes=5), # 재시도하는 시간 간격은 5분입니다.
 #)
-    dummy1 = DummyOperator(task_id="path1")
     for i in molding_brand_name:
         i=i.lower()
         fact=f'{i}_factory_name'
         fact_list=eval(fact)
+        dummy1 = DummyOperator(task_id="path1"+i)
         sleep_task = PythonOperator(
             task_id="sleep_60s"+ i,
             python_callable=wait_kafka,
@@ -386,6 +394,7 @@ with DAG(
         t3 = PythonOperator(
             task_id="pull_transform"+ i,
             python_callable=pull_transform,
+            op_kwargs={'brand_name':i},
             depends_on_past=False,
             owner="coops2",
             retries=0,
@@ -397,6 +406,7 @@ with DAG(
             t2 = PythonOperator(
                task_id="pull_mssql"+i,
                 python_callable=eval("pull_mssql_"+ i),
+                op_kwargs={'brand_name':i},
                 depends_on_past=False,
                 owner="coops2",
                 retries=0,
