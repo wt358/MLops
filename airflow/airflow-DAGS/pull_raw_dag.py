@@ -138,7 +138,7 @@ def pull_influx_dongshin(**kwargs):
 
         db_test = client['raw_data']
         collection_old=db_test['network_mold_data']
-        collection_old.renameCollection(f'{factory}_mold_data',False)
+        collection_old.rename(f'{factory}_mold_data')
         collection_test1 = db_test[f'{factory}_mold_data']
         collection_test1.create_index([("_time",ASCENDING)],unique=True)
         try:
