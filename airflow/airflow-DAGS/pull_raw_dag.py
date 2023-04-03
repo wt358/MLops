@@ -59,7 +59,7 @@ def pull_influx_woojin(**kwargs):
             #
             query = f' from(bucket:"{bucket}")\
             |> range(start: {start_date})\
-            |> filter(fn:(r) => r._measurement == {arg})\
+            |> filter(fn:(r) => r._measurement == "{arg}")\
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
             '
             #|> range(start: -2mo)
