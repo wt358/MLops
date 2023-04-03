@@ -27,8 +27,8 @@ from pattern_extract import *
 
 molding_brand_name = ['WooJin', 'DongShin']
 # molding_brand_name = ['WooJin' ]
-woojin_factory_name = ['NewSeoGwang', 'saasdfq']
-dongshin_factory_name = ['teng', 'sdfsdf1','333' ]
+woojin_factory_name = ['NewSeoGwang', ]
+dongshin_factory_name = ['teng',  ]
 
 def pull_influx_woojin(**kwargs):
     bucket = Variable.get("WOOJIN_INFLUX_BUCKET")
@@ -39,12 +39,12 @@ def pull_influx_woojin(**kwargs):
     start_date="-50d"
 
     print("WooJin")
-    
-    
+   
     brand_name=kwargs['brand_name']
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
+        print(factory)
         client = influxdb_client.InfluxDBClient(
         url=url,
         token=token,
@@ -66,7 +66,6 @@ def pull_influx_woojin(**kwargs):
 
 
         influx_df =  query_api.query_data_frame(query=query)
-        print(influx_df)
         print(influx_df.columns)
         if len(influx_df) < 1:
             client.close()
@@ -77,14 +76,10 @@ def pull_influx_woojin(**kwargs):
         host = Variable.get("WOOJIN_MONGO_URL_SECRET")
         client = MongoClient(host)
 
-
         db_test = client['peripheral_data']
         collection_test1 = db_test[f'{factory}_peripheral_data']
         collection_test1.create_index([("_time",ASCENDING)],unique=True)
         try:
-            # for row in data:
-            #     uniq=row['_time']
-            #     result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
             result = collection_test1.insert_many(data,ordered=False)
         except Exception as e:
             print("mongo connection failed")
@@ -104,56 +99,57 @@ def pull_influx_dongshin(**kwargs):
     url= Variable.get("INFLUX_URL")
     start_date="-50d"
     print("Dongshin")
-    client = influxdb_client.InfluxDBClient(
-    url=url,
-    token=token,
-    org=org,
-    timeout=500_000
-    )
-
     brand_name=kwargs['brand_name']
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
-    query_api = client.query_api()
+    
+    for factory in factorys:
+        client = influxdb_client.InfluxDBClient(
+        url=url,
+        token=token,
+        org=org,
+        timeout=500_000
+        )
 
-    #
-    query = f' from(bucket:"{bucket}")\
-    |> range(start: {start_date})\
-    |> filter(fn:(r) => r._measurement == "NetworkInjectionMoldV1")\
-    |> filter(fn:(r) => r._field!= "_measurement")\
-    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
-    '
-    #|> range(start: -2mo)
-    # result = query_api.query(org=org, query=query)
-    # print(result)
+        query_api = client.query_api()
 
+        #
+        query = f' from(bucket:"{bucket}")\
+        |> range(start: {start_date})\
+        |> filter(fn:(r) => r._measurement == "NetworkInjectionMoldV1")\
+        |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
+        '
+        #|> range(start: -2mo)
+        # result = query_api.query(org=org, query=query)
+        # print(result)
 
-    influx_df =  query_api.query_data_frame(query=query)
-    print(influx_df)
-    print(influx_df.columns)
-    if len(influx_df) < 1:
+        influx_df =  query_api.query_data_frame(query=query)
+        print(influx_df)
+        print(influx_df.columns)
+        if len(influx_df) < 1:
+            client.close()
+            return 0
+        influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
         client.close()
-        return 0
-    influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
-    print(influx_df)
-    client.close()
-    data=influx_df.to_dict('records')
-    host = Variable.get("MONGO_URL_SECRET")
-    client = MongoClient(host)
+        data=influx_df.to_dict('records')
+        host = Variable.get("MONGO_URL_SECRET")
+        client = MongoClient(host)
 
 
-    db_test = client['raw_data']
-    collection_test1 = db_test['network_mold_data']
-    collection_test1.create_index([("_time",ASCENDING)],unique=True)
-    try:
-        # for row in data:
-        #     uniq=row['_time']
-        #     result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
-        result = collection_test1.insert_many(data,ordered=False)
-    except Exception as e:
-        print("mongo connection failed")
-        print(e)
-    client.close()
+        db_test = client['raw_data']
+        collection_old=db_test['network_mold_data']
+        collection_old.renameCollection(f'{factory}_mold_data',False)
+        collection_test1 = db_test[f'{factory}_mold_data']
+        collection_test1.create_index([("_time",ASCENDING)],unique=True)
+        try:
+            # for row in data:
+            #     uniq=row['_time']
+            #     result = collection_test1.update_one({'idx':uniq},{"$set":row},upsert=True)
+            result = collection_test1.insert_many(data,ordered=False)
+        except Exception as e:
+            print("mongo connection failed")
+            print(e)
+        client.close()
     print("hello pull influx")
 
 def wait_kafka():
@@ -213,7 +209,6 @@ def pull_mssql_woojin(**kwargs):
 
         host_mongo = Variable.get("WOOJIN_MONGO_URL_SECRET")
         client = MongoClient(host_mongo)
-
 
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
