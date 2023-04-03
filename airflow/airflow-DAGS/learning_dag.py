@@ -460,7 +460,7 @@ for i in molding_brand_name:
 
         main_or_vari = BranchPythonOperator(
             task_id = 'branch_'+j,
-            python_callable=which_path,
+            python_callable=eval('which_path_'+i),
             op_kwargs={'brand_name':i,'factory_name':j},
             dag=dag,
         )
