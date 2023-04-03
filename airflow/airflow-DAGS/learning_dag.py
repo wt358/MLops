@@ -24,6 +24,10 @@ tad_tag='0.01'
 
 dag_id = 'learning-dag'
 
+molding_brand_name = ['WooJin', 'DongShin']
+woojin_factory_name = ['NewSeoGwang', ]
+dongshin_factory_name = ['teng',  ]
+
 task_default_args = {
         'owner': 'coops2',
         'retries': 0,
@@ -78,7 +82,7 @@ secret_volume = Secret(
         secret='db-secret-hk8b2hk77m',
         # Key in the form of service account file name
         key='mongo-url-secret.json')
-secret_all = Secret('env', None, 'db-secret-hk8b2hk77m')
+# secret_all = Secret('env', None, 'db-secret-hk8b2hk77m')
 secret_all1 = Secret('env', None, 'airflow-cluster-config-envs')
 secret_all2 = Secret('env', None, 'airflow-cluster-db-migrations')
 secret_all3 = Secret('env', None, 'airflow-cluster-pgbouncer')
@@ -89,7 +93,8 @@ secret_all7 = Secret('env', None, 'airflow-cluster-token-7wptr')
 secret_all8 = Secret('env', None, 'airflow-cluster-webserver-config')
 secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
 secret_allb = Secret('env', None, 'default-token-8d2dz')
-
+secret_newseogwang = Secret('env', None, 'newseogwang-db-secret-d64ch8k9gf')
+secret_teng= Secret('env', None, 'teng-db-secret-hk8b2hk77m')
 
 
 gpu_aff={
@@ -211,125 +216,131 @@ def which_path():
         task_id = 'path_vari'
     return task_id
 
-start = DummyOperator(task_id="start", dag=dag)
 
-run_iqr = KubernetesPodOperator(
-        task_id="iqr_gan_pod_operator",
-        name="iqr-gan",
-        namespace='airflow-cluster',
-        image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
-        #image_pull_policy="Always",
-        image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        cmds=["sh" ],
-        arguments=["command.sh", "iqr"],
-        affinity=gpu_aff,
-        #resources=pod_resources,
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-        env_vars={'EXECUTION_DATE':"{{ds}}"},
-        #env_vars={'MONGO_URL_SECRET':'{{var.value.MONGO_URL_SECRET}}'},
-        #configmaps=configmaps,
-        is_delete_operator_pod=True,
-        get_logs=True,
-        startup_timeout_seconds=600,
+for i in molding_brand_name:
+    i=i.lower()
+    fact=f'{i}_factory_name'
+    fact_list=eval(fact)
+    for j in fact_list:
+        j=j.lower()
+        start = DummyOperator(task_id=f"start_{j}", dag=dag)
+        run_iqr = KubernetesPodOperator(
+                task_id="iqr_gan_pod_operator_"+j,
+                name="iqr-gan",
+                namespace='airflow-cluster',
+                image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
+                #image_pull_policy="Always",
+                image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+                cmds=["sh" ],
+                arguments=["command.sh", "iqr"],
+                affinity=gpu_aff,
+                #resources=pod_resources,
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                #env_vars={'MONGO_URL_SECRET':'{{var.value.MONGO_URL_SECRET}}'},
+                #configmaps=configmaps,
+                is_delete_operator_pod=True,
+                get_logs=True,
+                startup_timeout_seconds=600,
+                )
+
+        run_lstm = KubernetesPodOperator(
+                task_id="lstm_pod_operator_"+j,
+                name="lstm-auto-encoder",
+                namespace='airflow-cluster',
+                image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
+                #image_pull_policy="Always",
+                #image_pull_policy="IfNotPresent",
+                image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+                cmds=["sh" ],
+                arguments=["command.sh", "lstm"],
+                affinity=gpu_aff,
+                #resources=pod_resources,
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
+                #configmaps=configmaps,
+                is_delete_operator_pod=True,
+                get_logs=True,
+                startup_timeout_seconds=600,
+                )
+        run_tadgan = KubernetesPodOperator(
+                task_id="tad_pod_operator_"+j,
+                name="tad-gan",
+                namespace='airflow-cluster',
+                image=f'ctf-mlops.kr.ncr.ntruss.com/tad:{tad_tag}',
+                #image_pull_policy="Always",
+                #image_pull_policy="IfNotPresent",
+                image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+                cmds=["sh" ],
+                arguments=["command.sh", "tad_gan"],
+                affinity=gpu_aff,
+                #resources=pod_resources,
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
+                #configmaps=configmaps,
+                is_delete_operator_pod=True,
+                get_logs=True,
+                startup_timeout_seconds=600,
+                )
+        run_svm = KubernetesPodOperator(
+                task_id="oc_svm_pod_operator_"+j,
+                name="oc-svm",
+                namespace='airflow-cluster',
+                image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
+                #image_pull_policy="Always",
+                image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                cmds=["sh" ],
+                arguments=["command.sh","oc_svm"],
+                affinity=cpu_aff,
+                is_delete_operator_pod=True,
+                get_logs=True,
+                startup_timeout_seconds=600,
+                )
+        run_eval = KubernetesPodOperator(
+                task_id="eval_pod_operator_"+j,
+                name="data-eval",
+                namespace='airflow-cluster',
+                image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
+                #image_pull_policy="Always",
+                image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                cmds=["sh" ],
+                arguments=["command.sh","eval"],
+                affinity=cpu_aff,
+                is_delete_operator_pod=True,
+                get_logs=True,
+                startup_timeout_seconds=600,
+                )
+
+
+
+        main_or_vari = BranchPythonOperator(
+            task_id = 'branch_'+j,
+            python_callable=which_path,
+            dag=dag,
         )
 
-run_lstm = KubernetesPodOperator(
-        task_id="lstm_pod_operator",
-        name="lstm-auto-encoder",
-        namespace='airflow-cluster',
-        image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
-        #image_pull_policy="Always",
-        #image_pull_policy="IfNotPresent",
-        image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        cmds=["sh" ],
-        arguments=["command.sh", "lstm"],
-        affinity=gpu_aff,
-        #resources=pod_resources,
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-        env_vars={'EXECUTION_DATE':"{{ds}}"},
-        #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
-        #configmaps=configmaps,
-        is_delete_operator_pod=True,
-        get_logs=True,
-        startup_timeout_seconds=600,
-        )
-run_tadgan = KubernetesPodOperator(
-        task_id="tad_pod_operator",
-        name="tad-gan",
-        namespace='airflow-cluster',
-        image=f'ctf-mlops.kr.ncr.ntruss.com/tad:{tad_tag}',
-        #image_pull_policy="Always",
-        #image_pull_policy="IfNotPresent",
-        image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        cmds=["sh" ],
-        arguments=["command.sh", "tad_gan"],
-        affinity=gpu_aff,
-        #resources=pod_resources,
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-        env_vars={'EXECUTION_DATE':"{{ds}}"},
-        #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
-        #configmaps=configmaps,
-        is_delete_operator_pod=True,
-        get_logs=True,
-        startup_timeout_seconds=600,
-        )
-run_svm = KubernetesPodOperator(
-        task_id="oc_svm_pod_operator",
-        name="oc-svm",
-        namespace='airflow-cluster',
-        image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
-        #image_pull_policy="Always",
-        image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-        env_vars={'EXECUTION_DATE':"{{ds}}"},
-        cmds=["sh" ],
-        arguments=["command.sh","oc_svm"],
-        affinity=cpu_aff,
-        is_delete_operator_pod=True,
-        get_logs=True,
-        startup_timeout_seconds=600,
-        )
-run_eval = KubernetesPodOperator(
-        task_id="eval_pod_operator",
-        name="data-eval",
-        namespace='airflow-cluster',
-        image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
-        #image_pull_policy="Always",
-        image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-        secrets=[secret_all,secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-        env_vars={'EXECUTION_DATE':"{{ds}}"},
-        cmds=["sh" ],
-        arguments=["command.sh","eval"],
-        affinity=cpu_aff,
-        is_delete_operator_pod=True,
-        get_logs=True,
-        startup_timeout_seconds=600,
-        )
+        after_aug = DummyOperator(task_id="Aug_fin_"+j, dag=dag)
+        after_ml = DummyOperator(task_id="ML_fin_"+j, dag=dag)
 
+        start >> main_or_vari
 
-
-main_or_vari = BranchPythonOperator(
-    task_id = 'branch',
-    python_callable=which_path,
-    dag=dag,
-)
-
-after_aug = DummyOperator(task_id="Aug_fin", dag=dag)
-after_ml = DummyOperator(task_id="ML_fin", dag=dag)
-
-start >> main_or_vari
-
-for path in paths:
-    t = DummyOperator(
-        task_id=path,
-        dag=dag,
-        )
-    
-    if path == 'path_main':
-        main_or_vari >> t >> run_iqr >> after_aug 
-        after_aug >> [run_svm, run_lstm] >> after_ml
-        after_aug >> run_eval
-    elif path == 'path_vari':
-        # main_or_vari >> t >> run_tadgan
-        main_or_vari >> t 
-        
+        for path in paths:
+            t = DummyOperator(
+                task_id=path+j,
+                dag=dag,
+                )
+            
+            if path == 'path_main':
+                main_or_vari >> t >> run_iqr >> after_aug 
+                after_aug >> [run_svm, run_lstm] >> after_ml
+                after_aug >> run_eval
+            elif path == 'path_vari':
+                # main_or_vari >> t >> run_tadgan
+                main_or_vari >> t 
+                
