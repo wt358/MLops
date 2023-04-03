@@ -336,7 +336,6 @@ def pull_transform_dongshin(**kwargs):
 
 def pull_transform_woojin(**kwargs):
     
-    
     brand_name=kwargs['brand_name']
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
@@ -348,7 +347,7 @@ def pull_transform_woojin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=1)
+        start = now - timedelta(days=5)
         print(start)
         query={
                 'TimeStamp':{
