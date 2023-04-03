@@ -394,7 +394,7 @@ def pull_transform_woojin(**kwargs):
         print(moldset_labeled_9000R.head())
         print(len(moldset_labeled_9000R))
         '''
-        host = Variable.get("MONGO_URL_SECRET")
+        host = Variable.get("WOOJIN_MONGO_URL_SECRET")
         client = MongoClient(host)
 
         db_test = client['etl_data']
