@@ -126,19 +126,17 @@ def pull_influx_dongshin(**kwargs):
         influx_df =  query_api.query_data_frame(query=query)
         print(influx_df)
         print(influx_df.columns)
-        # if len(influx_df) < 1:
-        #     client.close()
-        #     return 0
-        # influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
-        # client.close()
-        # data=influx_df.to_dict('records')
+        if len(influx_df) < 1:
+            client.close()
+            return 0
+        influx_df = influx_df[influx_df['All_Mold_Number']!="NaN"]
+        client.close()
+        data=influx_df.to_dict('records')
         host = Variable.get("MONGO_URL_SECRET")
         client = MongoClient(host)
 
 
         db_test = client['raw_data']
-        collection_old=db_test['network_mold_data']
-        collection_old.rename(f'{factory}_mold_data')
         collection_test1 = db_test[f'{factory}_mold_data']
         collection_test1.create_index([("_time",ASCENDING)],unique=True)
         try:
