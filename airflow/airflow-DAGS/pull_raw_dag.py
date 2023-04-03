@@ -46,7 +46,7 @@ def pull_influx_woojin(**kwargs):
     for factory in factorys:
         
         print(factory)
-        arg_list=["CLSeoGwang06HO","CLSeoGwang25HO","SeoGwang25HO","SeoGwangHopper","SeoGwangHopper6","SeoGwangHopper7"]
+        arg_list=["CLSeoGwang06HO","CLSeoGwang25HO"]
         for arg in arg_list:
             client = influxdb_client.InfluxDBClient(
             url=url,
