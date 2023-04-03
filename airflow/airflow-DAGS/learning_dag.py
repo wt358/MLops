@@ -32,7 +32,7 @@ task_default_args = {
         'owner': 'coops2',
         'retries': 0,
         'retry_delay': timedelta(minutes=1),
-        'depends_on_past': True,
+        'depends_on_past': False,
         #'execution_timeout': timedelta(minutes=5)
 }
 
@@ -43,7 +43,8 @@ dag = DAG(
         default_args=task_default_args,
         schedule_interval=timedelta(days=7),
         max_active_runs=3,
-        catchup=True
+        # catchup=True,
+        catchup=False,
 )
 '''
 env_from = [
@@ -332,7 +333,7 @@ for i in molding_brand_name:
 
         for path in paths:
             t = DummyOperator(
-                task_id=path+j,
+                task_id=path+'_'+j,
                 dag=dag,
                 )
             
