@@ -17,6 +17,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
 from pymongo import MongoClient, ASCENDING, DESCENDING
+import pymongo
 import pandas as pd
 
 gpu_tag='0.14'
@@ -145,14 +146,87 @@ cpu_aff={
 
 paths=['path_main','path_vari']
 
-def print_stat(df,i):
+def print_rank(df,i,machine_no,factory):
+    today=pd.Timestamp.today()
+    date_1month=(today- pd.DateOffset(months=i)).strftime('%Y-%m-%d %I:%M:%S')
+    today=datetime.now().strftime("%Y-%m-%d")
+    host = Variable.get("WOOJIN_MONGO_URL_SECRET")
+    client = MongoClient(host)
+    db_rank= client['rank']
+    collection = db_rank[f'rank_{factory}_{machine_no}_{i}_{today}']
+    collection.create_index([("rank",pymongo.ASCENDING)],unique=True)
+
+    df2=df[df['TimeStamp'] > date_1month ]['Additional_Info_1'].value_counts()
+    df1=df2.rank(method='min',ascending=False)
+    print("\n",i,"month rank")
+    print("====================================")
+    df1=df1.rename("rank")
+    df2=df2.rename("count")
+    df_new=pd.concat([df1,df2],axis=1).reset_index()
+    print(df_new)
+    data=df_new.to_dict('records')
+    try:
+        collection.insert_many(data,ordered=False)
+    except Exception as e:
+        print("mongo connection failer",e)
+    print("====================================")
+    client.close()
+    return
+
+def print_stat_woojin(df,machine_no,factory):
+    host = Variable.get("WOOJIN_MONGO_URL_SECRET")
+    client = MongoClient(host)
+    db_rank= client['stat']
+    today=pd.Timestamp.today()
+    date_1month=(today- pd.DateOffset(months=1)).strftime('%Y-%m-%d %I:%M:%S')
+    mode_machine_name=df[df['TimeStamp'] > date_1month ]['Additional_Info_1'].value_counts().idxmax()
+    print("main product ",mode_machine_name)
+    df= df[df['Additional_Info_1'] == mode_machine_name]
+    df.drop(columns={'idx','Machine_Name','Additional_Info_1', 'Additional_Info_2','Shot_Number',
+        },inplace=True)
+    print(df)
+    
+    for i in [1,6]:
+        today=pd.Timestamp.today()
+        date_1month=(today- pd.DateOffset(months=i)).strftime('%Y-%m-%d %I:%M:%S')
+        print(date_1month)
+        today=datetime.now().strftime("%Y-%m-%d")
+        collection = db_rank[f'stat_{factory}_{machine_no}_{i}month_{today}']
+        collection.create_index([("Today",pymongo.ASCENDING),("Feature",pymongo.ASCENDING)],unique=True)
+        df2=df[df['TimeStamp'] > date_1month ]
+        print(df2)
+        stat_df=df2.drop(columns={'TimeStamp'}).describe().T
+        
+        # df1=df2.rank(method='min',ascending=False)
+        
+        print("\n",i,"month stat")
+        print("====================================")
+        stat_df.reset_index(inplace=True)
+        stat_df = stat_df.rename(columns = {'index':'Feature'})
+        print(stat_df)
+        # df1=df1.rename("rank")
+        # df2=df2.rename("count")
+        # df_new=pd.concat([df1,df2],axis=1).reset_index()
+        # print(df_new)
+        stat_df['Today']=today
+        data=stat_df.to_dict('records')
+        try:
+            collection.insert_many(data,ordered=False)
+        except Exception as e:
+            print("mongo connection failer",e)
+        print("====================================")
+    client.close()
+    return
+
+
+def print_stat(df,i,factory):
     today=pd.Timestamp.today()
     date_1month=(today- pd.DateOffset(months=i)).strftime('%Y-%m-%d %I:%M:%S')
     today=datetime.now().strftime("%Y-%m-%d")
     host = Variable.get("MONGO_URL_SECRET")
     client = MongoClient(host)
     db_rank= client['stat']
-    collection = db_rank[f'teng_{i}month_{today}']
+    collection = db_rank[f'{factory}_{i}month_{today}']
     collection.create_index([("Today",ASCENDING),("Feature",ASCENDING)],unique=True)
     
     print(df)
@@ -180,15 +254,17 @@ def print_stat(df,i):
     return
 
 
-def which_path():
+def which_path_dongshin(**kwargs):
     '''
     return the task_id which to be executed
     '''
+    factory=kwargs['factory_name']
+    print(factory)
     host=Variable.get("MONGO_URL_SECRET")
     client=MongoClient(host)
     db=client["raw_data"]
-    collection=db["network_mold_data"]
-  
+    collection=db[f"{factory}_mold_data"]
+
     now=datetime.now()
     start=now-timedelta(days=183)
     query={
@@ -207,11 +283,73 @@ def which_path():
     print("======================================================")
     print("  6호기")
     for i in month_list:
-        print_stat(df, i)
+        print_stat(df, i,factory)
     print("======================================================")
     client.close()
 #   if '9000a' in mode_machine_name:
     if True:
+        task_id = 'path_main'
+    else:
+        task_id = 'path_vari'
+    return task_id
+
+def which_path_woojin(**kwargs):
+    '''
+    return the task_id which to be executed
+    '''
+    factory=kwargs['factory_name']
+    print(factory)
+    print(factory)
+    host = Variable.get("WOOJIN_MS_HOST")
+    database = Variable.get("WOOJIN_MS_DATABASE")
+    username = Variable.get("WOOJIN_MS_USERNAME")
+    password = Variable.get("WOOJIN_MS_PASSWORD")
+
+    query = text(
+        "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(day,-7,GETDATE())"
+        )
+    query1 = text(
+        "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(month,-6,GETDATE())"
+        )
+    conection_url = sqlalchemy.engine.url.URL(
+        drivername="mssql+pymssql",
+        username=username,
+        password=password,
+        host=host,
+        database=database,
+    )
+    engine = create_engine(conection_url, echo=True)
+    
+    sql_result_pd = pd.read_sql_query(query, engine)
+    sql_result_pd['Additional_Info_1']=sql_result_pd['Additional_Info_1'].str.strip()
+    mode_machine_name=sql_result_pd['Additional_Info_1'].value_counts().idxmax()
+    print(sql_result_pd['Additional_Info_1'].value_counts())
+    print(sql_result_pd)
+    print(mode_machine_name)
+    
+    sql_result = engine.execute(query1)
+    sql_result_pd = pd.read_sql_query(query1, engine)
+    sql_result_pd['Additional_Info_1']=sql_result_pd['Additional_Info_1'].str.strip()
+    sql_result_pd = sql_result_pd[sql_result_pd['Machine_Name'] != '7']
+    sql_result_pd = sql_result_pd[sql_result_pd['Machine_Name'] != '6i']
+    sql_result_pd_6 = sql_result_pd[sql_result_pd['Machine_Name'] != '']
+    sql_result_pd_25 = sql_result_pd[sql_result_pd['Machine_Name'] == '']
+    #   month_list = [1, 3, 6]
+    month_list = [1,6]
+    print("======================================================")
+    print("  6호기")
+    for i in month_list:
+        print_rank(sql_result_pd_6, i,6,factory)
+    print_stat_woojin(sql_result_pd_6,6,factory)
+    print("======================================================")
+    print("  25호기")
+    for i in month_list:
+        print_rank(sql_result_pd_25, i,25,factory)
+    print_stat_woojin(sql_result_pd_25,25,factory)
+    print("======================================================")
+    engine.dispose()
+    if '9000a' in mode_machine_name:
+    # if True:
         task_id = 'path_main'
     else:
         task_id = 'path_vari'
@@ -323,6 +461,7 @@ for i in molding_brand_name:
         main_or_vari = BranchPythonOperator(
             task_id = 'branch_'+j,
             python_callable=which_path,
+            op_kwargs={'brand_name':i,'factory_name':j},
             dag=dag,
         )
 
