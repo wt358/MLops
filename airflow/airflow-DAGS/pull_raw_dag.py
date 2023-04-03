@@ -44,46 +44,49 @@ def pull_influx_woojin(**kwargs):
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
+        
         print(factory)
-        client = influxdb_client.InfluxDBClient(
-        url=url,
-        token=token,
-        org=org,
-        timeout=500_000
-        )
-        query_api = client.query_api()
+        arg_list=["CLSeoGwang06HO","CLSeoGwang25HO","SeoGwang25HO","SeoGwangHopper","SeoGwangHopper6","SeoGwangHopper7"]
+        for arg in arg_list:
+            client = influxdb_client.InfluxDBClient(
+            url=url,
+            token=token,
+            org=org,
+            timeout=500_000
+            )
+            query_api = client.query_api()
 
-        #
-        query = f' from(bucket:"{bucket}")\
-        |> range(start: {start_date})\
-        |> filter(fn:(r) => r._measurement == "CLSeoGwang25HO")\
-        |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
-        '
-        #|> range(start: -2mo)
-        # result = query_api.query(org=org, query=query)
-        # print(result)
+            #
+            query = f' from(bucket:"{bucket}")\
+            |> range(start: {start_date})\
+            |> filter(fn:(r) => r._measurement == {arg})\
+            |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")\
+            '
+            #|> range(start: -2mo)
+            # result = query_api.query(org=org, query=query)
+            # print(result)
 
 
-        influx_df =  query_api.query_data_frame(query=query)
-        print(influx_df.columns)
-        if len(influx_df) < 1:
+            influx_df =  query_api.query_data_frame(query=query)
+            print(influx_df.columns)
+            if len(influx_df) < 1:
+                client.close()
+                return 0
+            print(influx_df)
             client.close()
-            return 0
-        print(influx_df)
-        client.close()
-        data=influx_df.to_dict('records')
-        host = Variable.get("WOOJIN_MONGO_URL_SECRET")
-        client = MongoClient(host)
+            data=influx_df.to_dict('records')
+            host = Variable.get("WOOJIN_MONGO_URL_SECRET")
+            client = MongoClient(host)
 
-        db_test = client['peripheral_data']
-        collection_test1 = db_test[f'{factory}_peripheral_data']
-        collection_test1.create_index([("_time",ASCENDING)],unique=True)
-        try:
-            result = collection_test1.insert_many(data,ordered=False)
-        except Exception as e:
-            print("mongo connection failed")
-            print(e)
-        client.close()
+            db_test = client['peripheral_data']
+            collection_test1 = db_test[f'{factory}_{arg}_peripheral_data']
+            collection_test1.create_index([("_time",ASCENDING)],unique=True)
+            try:
+                result = collection_test1.insert_many(data,ordered=False)
+            except Exception as e:
+                print("mongo connection failed")
+                print(e)
+            client.close()
     print("hello pull influx")
 
 
