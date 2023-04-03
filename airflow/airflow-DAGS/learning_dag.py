@@ -291,7 +291,7 @@ def which_path_dongshin(**kwargs):
         task_id = 'path_main'
     else:
         task_id = 'path_vari'
-    return task_id
+    return task_id+'_'+factory
 
 def which_path_woojin(**kwargs):
     '''
@@ -353,7 +353,7 @@ def which_path_woojin(**kwargs):
         task_id = 'path_main'
     else:
         task_id = 'path_vari'
-    return task_id
+    return task_id+'_'+factory
 
 
 for i in molding_brand_name:
