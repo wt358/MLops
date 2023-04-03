@@ -36,7 +36,7 @@ def pull_influx_woojin(**kwargs):
     token = Variable.get("WOOJIN_INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("WOOJIN_INFLUX_URL")
-    start_date="-50d"
+    start_date="-7d"
 
     print("WooJin")
    

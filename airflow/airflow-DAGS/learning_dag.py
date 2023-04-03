@@ -20,7 +20,7 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 import pymongo
 import pandas as pd
 
-gpu_tag='0.14'
+gpu_tag='0.15'
 tad_tag='0.01'
 
 dag_id = 'learning-dag'
@@ -371,7 +371,7 @@ for i in molding_brand_name:
                 #image_pull_policy="Always",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
                 cmds=["sh" ],
-                arguments=["command.sh", "iqr"],
+                arguments=["command.sh",i, "iqr"],
                 affinity=gpu_aff,
                 #resources=pod_resources,
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
@@ -392,7 +392,7 @@ for i in molding_brand_name:
                 #image_pull_policy="IfNotPresent",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
                 cmds=["sh" ],
-                arguments=["command.sh", "lstm"],
+                arguments=["command.sh",i, "lstm"],
                 affinity=gpu_aff,
                 #resources=pod_resources,
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
@@ -412,7 +412,7 @@ for i in molding_brand_name:
                 #image_pull_policy="IfNotPresent",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
                 cmds=["sh" ],
-                arguments=["command.sh", "tad_gan"],
+                arguments=["command.sh",i, "tad_gan"],
                 affinity=gpu_aff,
                 #resources=pod_resources,
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
@@ -433,7 +433,7 @@ for i in molding_brand_name:
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
                 env_vars={'EXECUTION_DATE':"{{ds}}"},
                 cmds=["sh" ],
-                arguments=["command.sh","oc_svm"],
+                arguments=["command.sh",i,"oc_svm"],
                 affinity=cpu_aff,
                 is_delete_operator_pod=True,
                 get_logs=True,
@@ -449,7 +449,7 @@ for i in molding_brand_name:
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
                 env_vars={'EXECUTION_DATE':"{{ds}}"},
                 cmds=["sh" ],
-                arguments=["command.sh","eval"],
+                arguments=["command.sh",i,"eval"],
                 affinity=cpu_aff,
                 is_delete_operator_pod=True,
                 get_logs=True,
