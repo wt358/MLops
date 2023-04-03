@@ -217,125 +217,197 @@ def pull_mssql_woojin(**kwargs):
             print("mongo connection failed",e)
         client.close()
     
-def pull_transform(**kwargs):
-    host = Variable.get("MONGO_URL_SECRET")
-    client = MongoClient(host)
+def pull_transform_dongshin(**kwargs):
 
-    db_test = client['raw_data']
-    collection_test1 = db_test['network_mold_data']
-    now = datetime.now()
-    start = now - timedelta(days=50)
-    print(start)
-    query={
-            '_time':{
-                '$gt':start,
-                '$lt':now
+    brand_name=kwargs['brand_name']
+    factorys=eval(brand_name + "_factory_name")
+    print(factorys)
+    for factory in factorys:
+        host = Variable.get("MONGO_URL_SECRET")
+        client = MongoClient(host)
+        db_test = client['raw_data']
+        collection_test1 = db_test[f'{factory}_mold_data']
+        now = datetime.now()
+        start = now - timedelta(days=50)
+        print(start)
+        query={
+                '_time':{
+                    '$gt':start,
+                    '$lt':now
+                    }
                 }
-            }
-    try:
-        df = pd.DataFrame(list(collection_test1.find(query)))
-    except Exception as e: 
-        print("mongo connection failed")
-    
-    print(df)
-    if df.empty:
-        print("empty")
-        return
-    df.drop(columns={'_id','_time','result','_measurement','table','_start','_stop'},inplace=True)
+        try:
+            df = pd.DataFrame(list(collection_test1.find(query)))
+        except Exception as e: 
+            print("mongo connection failed")
+        
+        print(df)
+        if df.empty:
+            print("empty")
+            return
+        df.drop(columns={'_id','_time','result','_measurement','table','_start','_stop'},inplace=True)
 
-    df=df.drop_duplicates(subset=["idx"])
-    df.rename(columns={"idx":"_time"},inplace=True)
-    for i in df.columns:
-        print("컬럼: {:40s}, 크기: {}, Null: {}".format(i, df[i].shape, df[i].isnull().sum()))
+        df=df.drop_duplicates(subset=["idx"])
+        df.rename(columns={"idx":"_time"},inplace=True)
+        for i in df.columns:
+            print("컬럼: {:40s}, 크기: {}, Null: {}".format(i, df[i].shape, df[i].isnull().sum()))
+        
+        print(df.shape)
+        print(df.columns)
+        print(df)
+        df.loc[:,df.columns.drop('_time')]=df.loc[:,df.columns.drop('_time')].apply(pd.to_numeric,errors='coerce')
+        print(df)
+        print(df.info())
+        # tmp = df.corr().abs()
+        # print(tmp)
+        # asdf = []
+        # for i in df.columns[1:]:
+        #     corr_col = tmp[tmp[i] > 0.5][i]
+        #     if len(corr_col.index.tolist()) > 0: 
+        #         asdf.append(corr_col.drop(i))
+        
+        # highly_correlated_columns = np.unique([j for i in asdf for j in i.index])
+        # print(df[highly_correlated_columns].corr())
+        
+        # scaler = StandardScaler()
+        # df2 = pd.DataFrame(scaler.fit_transform(df[highly_correlated_columns].dropna()), columns = highly_correlated_columns)
+        
+        # temp = pd.DataFrame([[i, df2[i].value_counts().shape[0]] for i in highly_correlated_columns if df2[i].value_counts().shape[0]]) 
+        # PV_Hold_Press_First_Time까지 cut (통계 기반 threshold를 구하는건 의미 없음)
+        # print(temp.sort_values(by=1, ascending=False))
+        
+        # important_column = temp[temp[1] >= 40][0].tolist()
+        # print(important_column)
+        
+        # for i in important_column:
+        #     try:
+        #         gwt = get_work_time(df[i], 0.25, 10, 10)
+        #         plt.figure(figsize=(16, 6))
+        #         df[i].plot(figsize=(15,5), title=i)
+        #         pd.concat([df[i].iloc[j[0]:j[1]] for j in gwt]).plot()
+        #     except:
+        #         print(i)
+        
+        # important_column2 = []
+        # gwts = []
+        # for i in important_column:
+        #     try:
+        #         gwt = get_work_time(df[i], 0.25, 10, 10)
+        #         gwts.append(gwt)
+        #         important_column2.append(i)
+        #     except:
+        #         print(i)
+        # print(important_column2)
+        
+        # print(df)
+        important_column2=['All_Mold_Number',
+            'Injection_Time',
+            'Machine_Process_Time',
+            'PV_Cooling_Time',
+            'PV_Penalty_Neglect_Monitoring',
+            'Product_Process_Time',
+            'Reservation_Mold_Number',
+            'Screw_Position',
+            'Weighing_Speed']
+        df=df[important_column2+['_time']].dropna()
+        print(df)
+        host = Variable.get("MONGO_URL_SECRET")
+        client = MongoClient(host)
+        today=datetime.now().strftime("%Y-%m-%d")
+        db_test = client['etl_data']
+        collection_etl=db_test[f'etl_{factory}']
+        collection_etl.create_index([("_time",ASCENDING)],unique=True)
+        data=df.to_dict('records')
+        # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
+        try:
+            result = collection_aug.insert_many(data,ordered=False)
+        except Exception as e: 
+            print("mongo connection failed")
+            print(e)
+        collection_aug=db_test[f'test_{factory}']
+        collection_aug.create_index([("_time",ASCENDING)],unique=True)
+        try:
+            result = collection_aug.insert_many(data,ordered=False)
+        except Exception as e: 
+            print("mongo connection failed")
+            print(e)
+        client.close()
+    print("hello")
+
+def pull_transform_woojin(**kwargs):
     
-    print(df.shape)
-    print(df.columns)
-    print(df)
-    df.loc[:,df.columns.drop('_time')]=df.loc[:,df.columns.drop('_time')].apply(pd.to_numeric,errors='coerce')
-    print(df)
-    print(df.info())
-    # tmp = df.corr().abs()
-    # print(tmp)
-    # asdf = []
-    # for i in df.columns[1:]:
-    #     corr_col = tmp[tmp[i] > 0.5][i]
-    #     if len(corr_col.index.tolist()) > 0: 
-    #         asdf.append(corr_col.drop(i))
     
-    # highly_correlated_columns = np.unique([j for i in asdf for j in i.index])
-    # print(df[highly_correlated_columns].corr())
-    
-    # scaler = StandardScaler()
-    # df2 = pd.DataFrame(scaler.fit_transform(df[highly_correlated_columns].dropna()), columns = highly_correlated_columns)
-    
-    # temp = pd.DataFrame([[i, df2[i].value_counts().shape[0]] for i in highly_correlated_columns if df2[i].value_counts().shape[0]]) 
-     # PV_Hold_Press_First_Time까지 cut (통계 기반 threshold를 구하는건 의미 없음)
-    # print(temp.sort_values(by=1, ascending=False))
-    
-    # important_column = temp[temp[1] >= 40][0].tolist()
-    # print(important_column)
-    
-    # for i in important_column:
-    #     try:
-    #         gwt = get_work_time(df[i], 0.25, 10, 10)
-    #         plt.figure(figsize=(16, 6))
-    #         df[i].plot(figsize=(15,5), title=i)
-    #         pd.concat([df[i].iloc[j[0]:j[1]] for j in gwt]).plot()
-    #     except:
-    #         print(i)
-    
-    # important_column2 = []
-    # gwts = []
-    # for i in important_column:
-    #     try:
-    #         gwt = get_work_time(df[i], 0.25, 10, 10)
-    #         gwts.append(gwt)
-    #         important_column2.append(i)
-    #     except:
-    #         print(i)
-    # print(important_column2)
-    
-    # print(df)
-    important_column2=['All_Mold_Number',
-        'Injection_Time',
-        'Machine_Process_Time',
-        'PV_Cooling_Time',
-        'PV_Penalty_Neglect_Monitoring',
-        'Product_Process_Time',
-        'Reservation_Mold_Number',
-        'Screw_Position',
-        'Weighing_Speed']
-    df=df[important_column2+['_time']].dropna()
-    print(df)
-    host = Variable.get("MONGO_URL_SECRET")
-    client = MongoClient(host)
-    today=datetime.now().strftime("%Y-%m-%d")
-    db_test = client['etl_data']
-    factory_name='teng'
-    collection_aug=db_test[f'etl_{factory_name}']
-    collection_aug.create_index([("_time",ASCENDING)],unique=True)
-    data=df.to_dict('records')
-    # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
-    try:
-        # for row in data:
-        #     uniq=row['_time']
-        #     result = collection_aug.update_one({'idx':uniq},{"$set":row},upsert=True)
-        result = collection_aug.insert_many(data,ordered=False)
-    except Exception as e: 
-        print("mongo connection failed")
-        print(e)
-    collection_aug=db_test[f'test_{factory_name}']
-    collection_aug.create_index([("_time",ASCENDING)],unique=True)
-    try:
-        # for row in data:
-        #     uniq=row['_time']
-        #     result = collection_aug.update_one({'idx':uniq},{"$set":row},upsert=True)
-        result = collection_aug.insert_many(data,ordered=False)
-    except Exception as e: 
-        print("mongo connection failed")
-        print(e)
-    
-    client.close()
+    brand_name=kwargs['brand_name']
+    factorys=eval(brand_name + "_factory_name")
+    print(factorys)
+    for factory in factorys:
+        print(factory)
+        host = Variable.get("WOOJIN_MONGO_URL_SECRET")
+        client = MongoClient(host)
+
+        db_test = client['raw_data']
+        collection_test1 = db_test[f'{factory}_mold_data']
+        now = datetime.now()
+        start = now - timedelta(days=1)
+        print(start)
+        query={
+                'TimeStamp':{
+                    '$gt':f'{start}',
+                    '$lt':f'{now}'
+                    }
+                }
+        try:
+            df = pd.DataFrame(list(collection_test1.find(query)))
+        except Exception as e: 
+            print("mongo connection failed")
+        
+        print(df)
+        if df.empty:
+            print("empty")
+            return
+        df.drop(columns={'_id'},inplace=True)
+
+        df=df.drop_duplicates(subset=["idx"])
+        df.drop(columns={'Mold_Temperature_1',
+            'Mold_Temperature_2',
+            'Mold_Temperature_3',
+            'Mold_Temperature_4',
+            'Mold_Temperature_5',
+            'Mold_Temperature_6',
+            'Mold_Temperature_7',
+            'Mold_Temperature_8',
+            'Mold_Temperature_9',
+            'Mold_Temperature_10',
+            'Mold_Temperature_11',
+            'Mold_Temperature_12',
+            'Hopper_Temperature',
+            'Cavity',
+            'NGmark',
+            },inplace=True)
+        df=df[df['idx']!='idx']
+        print(df.shape)
+        print(df.columns)
+        print(df)
+        '''
+        moldset_labeled_9000R=df[df.Additional_Info_1=='09520 9000R']
+        print(moldset_labeled_9000R.head())
+        moldset_labeled_9000R=moldset_labeled_9000R.reset_index(drop=True)
+        print(moldset_labeled_9000R.head())
+        print(len(moldset_labeled_9000R))
+        '''
+        host = Variable.get("MONGO_URL_SECRET")
+        client = MongoClient(host)
+
+        db_test = client['etl_data']
+        collection_etl=db_test[f'etl_{factory}']
+        collection_etl.create_index([("TimeStamp",ASCENDING)],unique=True)
+        data=df.to_dict('records')
+        try:
+            result = collection_etl.insert_many(data,ordered=False)
+        except Exception as e: 
+            print("mongo connection failed")
+            print(e)
+        client.close()
     print("hello")
 
 
@@ -385,7 +457,7 @@ with DAG(
 
         t3 = PythonOperator(
             task_id="pull_transform"+ i,
-            python_callable=pull_transform,
+            python_callable=eval("pull_transform_"+ i),
             op_kwargs={'brand_name':i},
             depends_on_past=False,
             owner="coops2",
