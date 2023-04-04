@@ -216,7 +216,7 @@ def pull_mssql_woojin(**kwargs):
         client = MongoClient(host_mongo)
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
-        collection_test1.create_index([("TimeStamp",ASCENDING),("Additional_Info_1",TEXT),("Filling_Time",ASCENDING)],unique=True)
+        collection_test1.create_index([("TimeStamp",ASCENDING),("Additional_Info_1",TEXT),("Filling_Time",ASCENDING),("Injection_Time",ASCENDING)],unique=True)
         try:
             result = collection_test1.insert_many(data,ordered=False)
         except Exception as e:
