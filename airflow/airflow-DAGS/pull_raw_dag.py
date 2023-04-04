@@ -193,8 +193,11 @@ def pull_mssql_woojin(**kwargs):
         sql_result = engine.execute(query)
         sql_result_pd = pd.read_sql_query(query, engine)
         df=sql_result_pd
+        print(df)
         df=df[df['idx']!='idx']
+        
         df.to_csv(os.path.join(".",FILENAME), index=False)
+        
         engine.dispose()
         # for i,row in enumerate(sql_result):
         #     #print(type(row)) == <class 'sqlalchemy.engine.row.LegacyRow'>
