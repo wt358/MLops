@@ -146,7 +146,7 @@ def iqr_mds_gan():
         #         print(message)
         start=now-timedelta(days=7)
         query={
-                '_time':{
+                'TimeStamp':{
                     '$gt':start,
                     '$lt':now
                     }
