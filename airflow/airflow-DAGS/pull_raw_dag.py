@@ -197,6 +197,10 @@ def pull_mssql_woojin(**kwargs):
         print(sql_result)
         print(sql_result_pd)
         print(df)
+        print(df)
+        print(df.duplicated().value_counts())
+        df1=df
+        print(df1.drop_duplicates())
         
         engine.dispose()
         # for i,row in enumerate(sql_result):
