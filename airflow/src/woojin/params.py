@@ -2,6 +2,10 @@ train_data_path = './data/cleansed/test.csv'
 train_columns = ['Plasticizing_Time'] # ['Max_Switch_Over_Pressure', 'Cycle_Time', 'Max_Injection_Pressure', 'Barrel_Temperature_6'] # change column names if EDA result is changed
 time_columns = "TimeStamp" # Update name if TimeStamp column name is changed
 
+molding_brand_name = ['WooJin', 'DongShin']
+woojin_factory_name = ['NewSeoGwang', ]
+dongshin_factory_name = ['teng', ]
+
 interval = 1
 latent_dim = 20
 shape = [100, 1]
