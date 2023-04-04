@@ -197,10 +197,9 @@ def pull_mssql_woojin(**kwargs):
         print(sql_result)
         print(sql_result_pd)
         print(df)
-        print(df.duplicated().value_counts())
+        print(df.duplicated().sum())
         df1=df
         print(df1.drop_duplicates())
-        print(df.value_counts())
         
         engine.dispose()
         # for i,row in enumerate(sql_result):
@@ -217,7 +216,16 @@ def pull_mssql_woojin(**kwargs):
         client = MongoClient(host_mongo)
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
-        collection_test1.create_index([("TimeStamp",ASCENDING),("Additional_Info_1",TEXT),("Filling_Time",ASCENDING),("Injection_Time",ASCENDING),("Barrel_Temperature_1",ASCENDING),("idx",ASCENDING)],unique=True)
+        collection_test1.create_index([("TimeStamp",ASCENDING),
+                                       ("Additional_Info_1",TEXT),
+                                       ("Filling_Time",ASCENDING),
+                                       ("Injection_Time",ASCENDING),
+                                       ("Barrel_Temperature_1",ASCENDING),
+                                       ("Max_Injection_Speed",ASCENDING),
+                                       ("Cushion_Position",ASCENDING),
+                                       ("Plasticizing_Time",ASCENDING),
+                                       ]
+                                      ,unique=True)
         try:
             result = collection_test1.insert_many(data,ordered=False)
         except Exception as e:
