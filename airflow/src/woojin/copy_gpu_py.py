@@ -131,10 +131,11 @@ def iqr_mds_gan():
 
     #dataframe extract
     factorys=params.woojin_factory_name
+    print(factorys)
     for factory in factorys:
         host = os.environ['MONGO_URL_SECRET'] 
         client = MongoClient(host)
-
+        print(factory)
         db_test = client['etl_data']
         collection_etl=db_test[f'etl_{factory}']
 

@@ -171,7 +171,7 @@ def pull_mssql_woojin(**kwargs):
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
-        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MI,-1440,GETDATE())")
+        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-12,GETDATE())")
         # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
         #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
         # MSSQL 접속
@@ -192,7 +192,9 @@ def pull_mssql_woojin(**kwargs):
 
         sql_result = engine.execute(query)
         sql_result_pd = pd.read_sql_query(query, engine)
-        sql_result_pd.to_csv(os.path.join(".",FILENAME), index=False)
+        df=sql_result_pd
+        df=df[df['idx']!='idx']
+        df.to_csv(os.path.join(".",FILENAME), index=False)
         engine.dispose()
         # for i,row in enumerate(sql_result):
         #     #print(type(row)) == <class 'sqlalchemy.engine.row.LegacyRow'>
