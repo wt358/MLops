@@ -193,8 +193,10 @@ def pull_mssql_woojin(**kwargs):
         sql_result = engine.execute(query)
         sql_result_pd = pd.read_sql_query(query, engine)
         df=sql_result_pd
-        print(df)
         df=df[df['idx']!='idx']
+        print(sql_result)
+        print(sql_result_pd)
+        print(df)
         
         engine.dispose()
         # for i,row in enumerate(sql_result):
@@ -209,12 +211,12 @@ def pull_mssql_woojin(**kwargs):
         data=df.to_dict('records')
         host_mongo = Variable.get("WOOJIN_MONGO_URL_SECRET")
         client = MongoClient(host_mongo)
-
+        print(data)
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         collection_test1.create_index([("TimeStamp",ASCENDING)],unique=True)
         try:
-            result = collection_test1.insert_many(data)
+            result = collection_test1.insert_many(data,ordered=False)
         except Exception as e:
             print("mongo connection failed",e)
         client.close()
