@@ -144,7 +144,7 @@ def iqr_mds_gan():
         #         l.append(loads(message['payload'])['fullDocument'])
         #     except:
         #         print(message)
-        start=now-timedelta(days=3)
+        start=now-timedelta(days=7)
         query={
                 '_time':{
                     '$gt':start,
