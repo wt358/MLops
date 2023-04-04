@@ -196,8 +196,6 @@ def pull_mssql_woojin(**kwargs):
         print(df)
         df=df[df['idx']!='idx']
         
-        df.to_csv(os.path.join(".",FILENAME), index=False)
-        
         engine.dispose()
         # for i,row in enumerate(sql_result):
         #     #print(type(row)) == <class 'sqlalchemy.engine.row.LegacyRow'>
@@ -208,10 +206,7 @@ def pull_mssql_woojin(**kwargs):
         #         #outcsv.writerow(r)
 
         print("query result length: " + str(len(list(sql_result))))
-
-        reader = open(FILENAME, 'r')
-        data = csv.DictReader(reader, sql_result.keys())
-
+        data=df.to_dict('records')
         host_mongo = Variable.get("WOOJIN_MONGO_URL_SECRET")
         client = MongoClient(host_mongo)
 
