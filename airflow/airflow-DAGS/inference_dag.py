@@ -503,6 +503,7 @@ with DAG(
             trigger_rule='none_failed_min_one_success',
         )
         for j in fact_list:
+            original_fact=j
             j=j.lower()
             dummy1 = DummyOperator(task_id="path1_"+j)
             main_or_vari = BranchPythonOperator(
@@ -547,7 +548,7 @@ with DAG(
                 # resources=pod_resources,
                 secrets=[eval('secret_'+j), secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
                         secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb],
-                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 # configmaps=configmaps,
                 is_delete_operator_pod=True,
@@ -569,7 +570,7 @@ with DAG(
                 # resources=pod_resources,
                 secrets=[eval('secret_'+j), secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
                         secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb],
-                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 # configmaps=configmaps,
                 is_delete_operator_pod=True,
