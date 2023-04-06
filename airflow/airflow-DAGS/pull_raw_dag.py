@@ -381,7 +381,7 @@ def pull_transform_woojin(**kwargs):
             print("empty")
             return
         df.drop(columns={'_id'},inplace=True)
-
+        client.close()
         # df=df.drop_duplicates(subset=["idx"])
         df.drop(columns={'Mold_Temperature_1',
             'Mold_Temperature_2',
