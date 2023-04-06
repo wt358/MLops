@@ -493,7 +493,6 @@ with DAG(
     # )
     num=0
     for i in molding_brand_name:
-        num=num+1
         i=i.lower()
         fact=f'{i}_factory_name'
         fact_list=eval(fact)
@@ -509,6 +508,7 @@ with DAG(
             trigger_rule='none_failed_min_one_success',
         )
         for j in fact_list:
+            num=num+1
             original_fact=j
             j=j.lower()
             dummy1 = DummyOperator(task_id="path1_"+j)
