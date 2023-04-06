@@ -36,7 +36,7 @@ def pull_influx_woojin(**kwargs):
     token = Variable.get("WOOJIN_INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("WOOJIN_INFLUX_URL")
-    start_date="-365d"
+    start_date="-7d"
 
     print("WooJin")
    
@@ -52,7 +52,7 @@ def pull_influx_woojin(**kwargs):
             url=url,
             token=token,
             org=org,
-            timeout=1500_000
+            timeout=500_000
             )
             query_api = client.query_api()
 
@@ -99,7 +99,7 @@ def pull_influx_dongshin(**kwargs):
     token = Variable.get("INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("INFLUX_URL")
-    start_date="-365d"
+    start_date="-50d"
     print("Dongshin")
     brand_name=kwargs['brand_name']
     factorys=eval(brand_name + "_factory_name")
@@ -110,7 +110,7 @@ def pull_influx_dongshin(**kwargs):
         url=url,
         token=token,
         org=org,
-        timeout=1500_000
+        timeout=500_000
         )
 
         query_api = client.query_api()
@@ -171,7 +171,7 @@ def pull_mssql_woojin(**kwargs):
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
-        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-36,GETDATE())")
+        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-14,GETDATE())")
         # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
         #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
         # MSSQL 접속
@@ -244,7 +244,7 @@ def pull_transform_dongshin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=700)
+        start = now - timedelta(days=50)
         print(start)
         query={
                 '_time':{
@@ -336,7 +336,7 @@ def pull_transform_dongshin(**kwargs):
         data=df.to_dict('records')
         # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
         try:
-            result = collection_etl.insert_many(data,ordered=False)
+            result = collection_aug.insert_many(data,ordered=False)
         except Exception as e: 
             print("mongo connection failed")
             print(e)
@@ -363,7 +363,7 @@ def pull_transform_woojin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=1000)
+        start = now - timedelta(days=4)
         print(start)
         query={
                 'TimeStamp':{
