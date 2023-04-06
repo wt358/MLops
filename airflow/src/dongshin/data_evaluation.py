@@ -29,7 +29,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 import random
 from logger import *
-
+import params
 ######################## Model Parameters ########################
 knn_params = {
     'n_neighbors' : list(np.arange(1,20, step=4)),
