@@ -542,7 +542,7 @@ with DAG(
                 # image_pull_policy="IfNotPresent",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
                 cmds=["sh"],
-                arguments=["command.sh",i, "tad_gan"],
+                arguments=["command.sh",i, "infer_main"],
                 affinity=gpu_aff,
                 # resources=pod_resources,
                 secrets=[eval('secret_'+j), secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
@@ -564,7 +564,7 @@ with DAG(
                 # image_pull_policy="IfNotPresent",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
                 cmds=["sh"],
-                arguments=["command.sh",i, "infer_ocsvm"],
+                arguments=["command.sh",i, "infer_vari"],
                 affinity=cpu_aff,
                 # resources=pod_resources,
                 secrets=[eval('secret_'+j), secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
@@ -589,7 +589,7 @@ with DAG(
                 
                 if path == 'path_main':
                     # main_or_vari>>t>>infer_main 
-                    main_or_vari>>t>>infer_main >> t2
+                    main_or_vari>>t>>[infer_main,infer_svm] >> t2
 
                 elif path == 'path_vari':
                     # main_or_vari>>t>>infer_tadgan

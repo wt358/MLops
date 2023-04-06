@@ -1154,7 +1154,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'infer_main':
         print("entering inference main product ")
         infer_main()
-    elif sys.argv[1] == 'infer_ocsvm':
+    elif sys.argv[1] == 'infer_vari':
         print("entering inference vari product ")
         infer_ocsvm()
     print("hello main")
