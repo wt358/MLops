@@ -253,7 +253,7 @@ def pull_transform_dongshin(**kwargs):
                     }
                 }
         try:
-            df = pd.DataFrame(list(collection_test1.find(query)))
+            df = pd.DataFrame(list(collection_test1.find()))
         except Exception as e: 
             print("mongo connection failed")
         
