@@ -29,6 +29,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 import random
 from logger import *
+import params
 
 ######################## Model Parameters ########################
 knn_params = {

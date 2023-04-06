@@ -384,8 +384,8 @@ def oc_svm():
         result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
         print(result)
         cnt=len(list(result.clone()))
-        print(result[0])
-        print(result[cnt-1])
+        # print(result[0])
+        # print(result[cnt-1])
         try:
             file_id = str(result[0]['file_id'])
             model = LoadModel(mongo_id=file_id).clf
@@ -580,8 +580,8 @@ def lstm_autoencoder():
             print(result)
             cnt=len(list(result.clone()))
             print(cnt)
-            print(result[0])
-            print(result[cnt-1])
+            # print(result[0])
+            # print(result[cnt-1])
             try:
                 file_id = str(result[0]['file_id'])
                 model = LoadModel(mongo_id=file_id).clf
