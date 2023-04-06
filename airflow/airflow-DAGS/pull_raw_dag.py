@@ -363,7 +363,7 @@ def pull_transform_woojin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=365)
+        start = now - timedelta(days=400)
         print(start)
         query={
                 'TimeStamp':{
@@ -423,6 +423,7 @@ def pull_transform_woojin(**kwargs):
                                        ("Barrel_Temperature_1",ASCENDING),
                                        ("Max_Injection_Speed",ASCENDING),
                                        ("Cushion_Position",ASCENDING),
+                                       ("Plasticizing_Time",ASCENDING),
                                      ],unique=True)
         data=df.to_dict('records')
         try:
