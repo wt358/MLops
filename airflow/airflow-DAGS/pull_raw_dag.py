@@ -171,7 +171,7 @@ def pull_mssql_woojin(**kwargs):
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
-        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MI,-2880,GETDATE())")
+        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MI,-1440,GETDATE())")
         # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
         #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
         # MSSQL 접속
@@ -218,6 +218,7 @@ def pull_mssql_woojin(**kwargs):
         collection_test1 = db_test[f'{factory}_mold_data']
         collection_test1.create_index([("TimeStamp",ASCENDING),
                                        ("Additional_Info_1",TEXT),
+                                       ("Machine_Name",TEXT),
                                        ("Filling_Time",ASCENDING),
                                        ("Injection_Time",ASCENDING),
                                        ("Barrel_Temperature_1",ASCENDING),
@@ -362,7 +363,7 @@ def pull_transform_woojin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=5)
+        start = now - timedelta(days=365)
         print(start)
         query={
                 'TimeStamp':{
@@ -414,7 +415,16 @@ def pull_transform_woojin(**kwargs):
 
         db_test = client['etl_data']
         collection_etl=db_test[f'etl_{factory}']
-        collection_etl.create_index([("TimeStamp",ASCENDING)],unique=True)
+        collection_etl.create_index([("TimeStamp",ASCENDING),
+                                     ("Additional_Info_1",TEXT),
+                                       ("Machine_Name",TEXT),
+                                       ("Filling_Time",ASCENDING),
+                                       ("Injection_Time",ASCENDING),
+                                       ("Barrel_Temperature_1",ASCENDING),
+                                       ("Max_Injection_Speed",ASCENDING),
+                                       ("Cushion_Position",ASCENDING),
+                                       ("Plasticizing_Time",ASCENDING),
+                                     ],unique=True)
         data=df.to_dict('records')
         try:
             result = collection_etl.insert_many(data,ordered=False)
