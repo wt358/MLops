@@ -392,11 +392,51 @@ def push_onpremise():
             print("mongo connection failer during push",e)
         client.close()
     print("hello push on premise")
+    
+def which_path_woojin(**kwargs):
+    '''
+    return the task_id which to be executed
+    '''
+    factory=kwargs['factory_name']
+    print(factory)
+    host = Variable.get("WOOJIN_MS_HOST")
+    database = Variable.get("WOOJIN_MS_DATABASE")
+    username = Variable.get("WOOJIN_MS_USERNAME")
+    password = Variable.get("WOOJIN_MS_PASSWORD")
 
-def which_path():
-  '''
-  return the task_id which to be executed
-  '''
+    query = text(
+        "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(day,-7,GETDATE())"
+        )
+    conection_url = sqlalchemy.engine.url.URL(
+        drivername="mssql+pymssql",
+        username=username,
+        password=password,
+        host=host,
+        database=database,
+    )
+    engine = create_engine(conection_url, echo=True)
+    
+    sql_result_pd = pd.read_sql_query(query, engine)
+    mode_machine_name=sql_result_pd['Additional_Info_1'].value_counts().idxmax()
+    print(sql_result_pd['Additional_Info_1'].value_counts())
+    print(sql_result_pd)
+    print(mode_machine_name)
+    
+    engine.dispose()
+    # if '9000a' in mode_machine_name:
+    if True:
+        task_id = 'path_main'
+    else:
+        task_id = 'path_vari'
+    return task_id+'_'+factory
+
+
+def which_path_dongshin(**kwargs):
+    '''
+    return the task_id which to be executed
+    '''
+    factory=kwargs['factory_name']
+    print(factory)
 #   host = Variable.get("MS_HOST")
 #   database = Variable.get("MS_DATABASE")
 #   username = Variable.get("MS_USERNAME")
@@ -421,11 +461,11 @@ def which_path():
   
   
 #   if '9000a' in mode_machine_name:
-  if True:
-    task_id = 'path_main'
-  else:
-    task_id = 'path_vari'
-  return task_id
+    if True:
+        task_id = 'path_main'
+    else:
+        task_id = 'path_vari'
+    return task_id+'_'+factory
 
 
 paths=['path_main','path_vari']
