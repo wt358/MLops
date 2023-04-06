@@ -195,8 +195,8 @@ def iqr_mds_gan():
         print(section.index.tolist())
         for idx in range(1,len(section.index.tolist())):
             # print(moldset_labeled_9000R.loc[idx,'TimeStamp'])
-            time_to_compare1 = section.loc[idx,'TimeStamp'], "%Y-%m-%d %H:%M:%S"
-            time_to_compare2 = section.loc[idx-1,'TimeStamp'], "%Y-%m-%d %H:%M:%S"
+            time_to_compare1 = section.loc[idx,'TimeStamp']
+            time_to_compare2 = section.loc[idx-1,'TimeStamp']
             time_diff = time_to_compare1 - time_to_compare2
 
             # 분 단위로 비교
