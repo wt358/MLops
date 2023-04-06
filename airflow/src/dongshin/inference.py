@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from datetime import timedelta
 
 from kafka import KafkaConsumer
 from pymongo import MongoClient
@@ -26,6 +27,7 @@ def infer_tad():
 
     gpus = tf.config.experimental.list_physical_devices('GPU')
 
+    factory=os.environ['FACT_NAME']
     if gpus:  
         # kill all the processes which is using GPU
         device = cuda.get_current_device()
@@ -122,28 +124,46 @@ def infer_ocsvm():
     
     now = datetime.now()
     curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
-    consumer = KafkaConsumer('etl.etl_data.test_teng',
-        group_id=f'infer_ocsvm_{curr_time}',
-        bootstrap_servers=['kafka-clust-kafka-persis-cc65d-15588214-38845b0307b9.kr.lb.naverncp.com:9094'],
-        value_deserializer=lambda x: loads(x.decode('utf-8')),
-        auto_offset_reset='earliest',
-        consumer_timeout_ms=10000
-        )
+    # consumer = KafkaConsumer('etl.etl_data.test_teng',
+    #     group_id=f'infer_ocsvm_{curr_time}',
+    #     bootstrap_servers=['kafka-clust-kafka-persis-cc65d-15588214-38845b0307b9.kr.lb.naverncp.com:9094'],
+    #     value_deserializer=lambda x: loads(x.decode('utf-8')),
+    #     auto_offset_reset='earliest',
+    #     consumer_timeout_ms=10000
+    #     )
     
     #consumer.poll(timeout_ms=1000, max_records=2000)
 
     #dataframe extract
-    l=[]
+    # l=[]
 
-    for message in consumer:
-        message = message.value
-        try:
-            l.append(loads(message['payload'])['fullDocument'])
-        except:
-            print(message)
+    # for message in consumer:
+    #     message = message.value
+    #     try:
+    #         l.append(loads(message['payload'])['fullDocument'])
+    #     except:
+    #         print(message)
 
-    df = pd.DataFrame(l)
-    consumer.close()
+    # df = pd.DataFrame(l)
+    # consumer.close()
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    print(factory)
+    db_test = client['etl_data']
+    collection_etl=db_test[f'etl_{factory}']
+    start=now-timedelta(days=1)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                '$lt':now
+                }
+            }
+    try:
+        df = pd.DataFrame(list(collection_etl.find(query)))
+    except Exception as e:
+        print("mongo connection failed", e)
+    client.close()
     print(df)
     if df.empty:
         print("empty queue")
@@ -177,7 +197,7 @@ def infer_ocsvm():
      
     db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
-    collection_model=db_model['OCSVM_teng']
+    collection_model=db_model[f'OCSVM_{factory}']
     
     model_name = 'OC_SVM'
     model_fpath = f'{model_name}.joblib'
@@ -243,7 +263,7 @@ def infer_ocsvm():
     # print(cf)
     # (tn, fp, fn, tp) = cf.flatten()
     db_test = client['result_log']
-    collection = db_test[f'log_{model_name}_teng']
+    collection = db_test[f'log_{model_name}_{factory}']
     collection.create_index([("TimeStamp",ASCENDING)],unique=True)
     #data=scored.to_dict('records')
     data=y_log.to_dict('records')
@@ -290,33 +310,53 @@ def infer_lstm():
     window_step_size_portion =params.window_step_size_portion
     min_percent = params.min_percent
     anomaly_padding =params.anomaly_padding
+    
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    print(factory)
+    db_test = client['etl_data']
+    collection_etl=db_test[f'etl_{factory}']
+
 
         
     #data consumer
     
     now = datetime.now()
     curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
-    consumer = KafkaConsumer('etl.etl_data.test_teng',
-        group_id=f'infer_lstm_{curr_time}',
-        bootstrap_servers=['kafka-clust-kafka-persis-cc65d-15588214-38845b0307b9.kr.lb.naverncp.com:9094'],
-        value_deserializer=lambda x: loads(x.decode('utf-8')),
-        auto_offset_reset='earliest',
-        consumer_timeout_ms=10000
-        )
+    # consumer = KafkaConsumer('etl.etl_data.test_teng',
+    #     group_id=f'infer_lstm_{curr_time}',
+    #     bootstrap_servers=['kafka-clust-kafka-persis-cc65d-15588214-38845b0307b9.kr.lb.naverncp.com:9094'],
+    #     value_deserializer=lambda x: loads(x.decode('utf-8')),
+    #     auto_offset_reset='earliest',
+    #     consumer_timeout_ms=10000
+    #     )
     
     #consumer.poll(timeout_ms=1000, max_records=2000)
 
     #dataframe extract
-    l=[]
+    # l=[]
 
-    for message in consumer:
-        message = message.value
-        try:
-            l.append(loads(message['payload'])['fullDocument'])
-        except:
-            print(message)
-    df = pd.DataFrame(l)
-    consumer.close()
+    # for message in consumer:
+    #     message = message.value
+    #     try:
+    #         l.append(loads(message['payload'])['fullDocument'])
+    #     except:
+    #         print(message)
+    # df = pd.DataFrame(l)
+    # consumer.close()
+    start=now-timedelta(days=1)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                '$lt':now
+                }
+            }
+    try:
+        df = pd.DataFrame(list(collection_etl.find(query)))
+    except Exception as e:
+        print("mongo connection failed", e)
+
     print(df)
     if df.empty:
         print("empty queue")
@@ -353,7 +393,7 @@ def infer_lstm():
     
     db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
-    collection_model=db_model['scaler_lstm_teng']
+    collection_model=db_model[f'scaler_lstm_{factory}']
     
     model_name = 'scaler_data'
     model_fpath = f'{model_name}.joblib'
@@ -379,7 +419,7 @@ def infer_lstm():
     #model load    
     
     model_name = 'LSTM_autoencoder'
-    collection_model=db_model[f'{model_name}_teng']
+    collection_model=db_model[f'{model_name}_{factory}']
     
     model_fpath = f'{model_name}.joblib'
     result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
@@ -453,7 +493,7 @@ def infer_lstm():
     print(y_test)
 
     db_test = client['result_log']
-    collection = db_test[f'log_{model_name}_teng']
+    collection = db_test[f'log_{model_name}_{factory}']
     collection.create_index([("TimeStamp",ASCENDING)],unique=True)
     #data=scored.to_dict('records')
     data=scored.to_dict('records')

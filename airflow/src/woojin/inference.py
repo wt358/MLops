@@ -75,6 +75,24 @@ def infer_ocsvm():
     #     l.append(loads(message['payload'])['fullDocument'])
     # df = pd.DataFrame(l)
     # consumer.close()
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    print(factory)
+    db_test = client['etl_data']
+    collection_etl=db_test[f'etl_{factory}']
+    start=now-timedelta(days=1)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                '$lt':now
+                }
+            }
+    try:
+        df = pd.DataFrame(list(collection_etl.find(query)))
+    except Exception as e:
+        print("mongo connection failed", e)
+    client.close()
     print(df)
     if df.empty:
         print("empty queue")
@@ -112,9 +130,9 @@ def infer_ocsvm():
      
     host = os.environ['MONGO_URL_SECRET'] 
     client=MongoClient(host)
-    db_model = client['coops2022_model']
+    db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
-    collection_model=db_model['mongo_OCSVM']
+    collection_model=db_model[f'OCSVM_{factory}']
     
     model_name = 'OC_SVM'
     model_fpath = f'{model_name}.joblib'
@@ -186,8 +204,8 @@ def infer_ocsvm():
     # % of transactions labeled as fraud that were correct (precision): {tp}/({fp}+{tp}) = {tp/(fp+tp):.2%}
     # % of fraudulent transactions were caught succesfully (recall):    {tp}/({fn}+{tp}) = {tp/(fn+tp):.2%}
     # % of g-mean value : root of (specificity)*(recall) = ({tn}/({fp}+{tn})*{tp}/({fn}+{tp})) = {(tn/(fp+tn)*tp/(fn+tp))**0.5 :.2%}""")
-    db_test=client['coops2022_result']
-    collection=db_test[f'result_{model_name}']
+    db_test = client['result_log']
+    collection = db_test[f'log_{model_name}_{factory}']
     collection.create_index([("TimeStamp",pymongo.ASCENDING)],unique=True)
     data=y_log.to_dict('records')
     try:
@@ -259,28 +277,46 @@ def infer_lstm():
     min_percent = params.min_percent
     anomaly_padding =params.anomaly_padding
 
-        
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    print(factory)
+    db_test = client['etl_data']
+    collection_etl=db_test[f'etl_{factory}']
+   
     #data consumer
     
     now = datetime.now()
     curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
 
-    consumer = KafkaConsumer('test.coops2022_etl.etl_data',
-            group_id=f'Inference_lstm_{curr_time}',
-            bootstrap_servers=['kafka-clust-kafka-persis-d198b-11683092-d3d89e335b84.kr.lb.naverncp.com:9094'],
-            value_deserializer=lambda x: loads(x.decode('utf-8')),
-            auto_offset_reset='earliest',
-            consumer_timeout_ms=10000
-            )
+    # consumer = KafkaConsumer('test.coops2022_etl.etl_data',
+    #         group_id=f'Inference_lstm_{curr_time}',
+    #         bootstrap_servers=['kafka-clust-kafka-persis-d198b-11683092-d3d89e335b84.kr.lb.naverncp.com:9094'],
+    #         value_deserializer=lambda x: loads(x.decode('utf-8')),
+    #         auto_offset_reset='earliest',
+    #         consumer_timeout_ms=10000
+    #         )
     #consumer.poll(timeout_ms=1000, max_records=2000)
 
     #dataframe extract
-    l=[]
+    # l=[]
 
-    for message in consumer:
-        message = message.value
-        l.append(loads(message['payload'])['fullDocument'])
-    df = pd.DataFrame(l)
+    # for message in consumer:
+    #     message = message.value
+    #     l.append(loads(message['payload'])['fullDocument'])
+    # df = pd.DataFrame(l)
+    start=now-timedelta(days=1)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                '$lt':now
+                }
+            }
+    try:
+        df = pd.DataFrame(list(collection_etl.find(query)))
+    except Exception as e:
+        print("mongo connection failed", e)
+
     print(df)
     if df.empty:
         print("empty queue")
@@ -321,9 +357,9 @@ def infer_lstm():
     
     host = os.environ['MONGO_URL_SECRET'] 
     client = MongoClient(host)
-    db_model = client['coops2022_model']
+    db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
-    collection_model=db_model['mongo_scaler_lstm']
+    collection_model=db_model[f'scaler_lstm_{factory}']
     
     model_name = 'scaler_data'
     model_fpath = f'{model_name}.joblib'
@@ -349,7 +385,7 @@ def infer_lstm():
     #model load    
     
     model_name = 'LSTM_autoencoder'
-    collection_model=db_model[f'mongo_{model_name}']
+    collection_model=db_model[f'{model_name}_{factory}']
     
     model_fpath = f'{model_name}.joblib'
     result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
@@ -410,8 +446,8 @@ def infer_lstm():
 
     print(y_test)
 
-    db_test = client['coops2022_result']
-    collection = db_test[f'result_{model_name}']
+    db_test = client['result_log']
+    collection = db_test[f'log_{model_name}_{factory}']
     collection.create_index([("TimeStamp",pymongo.ASCENDING)],unique=True)
     data=scored.to_dict('records')
     # data=X_pred.to_dict('records')
