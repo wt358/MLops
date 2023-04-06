@@ -36,7 +36,7 @@ def pull_influx_woojin(**kwargs):
     token = Variable.get("WOOJIN_INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("WOOJIN_INFLUX_URL")
-    start_date="-365d"
+    start_date="-720d"
 
     print("WooJin")
    
@@ -99,7 +99,7 @@ def pull_influx_dongshin(**kwargs):
     token = Variable.get("INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("INFLUX_URL")
-    start_date="-50d"
+    start_date="-365d"
     print("Dongshin")
     brand_name=kwargs['brand_name']
     factorys=eval(brand_name + "_factory_name")
@@ -244,7 +244,7 @@ def pull_transform_dongshin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=7)
+        start = now - timedelta(days=700)
         print(start)
         query={
                 '_time':{
