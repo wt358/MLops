@@ -347,50 +347,55 @@ def model_inference():
 
     print("hello inference")
 
-def push_onpremise():
+def push_onpremise(**kwargs):
     model_names = ['LSTM_autoencoder','OC_SVM']
-    
+    brand=kwargs['brand_name']
+    factorys=eval(brand+ "_factory_name")
+    print(factorys)
     now=datetime.now()
     start=now-timedelta(days=50)
     for model_name in model_names:
-            
-        host = Variable.get("MONGO_URL_SECRET")
-        client = MongoClient(host)
-        db_result = client['result_log']
-        collection = db_result[f'log_{model_name}_teng']
-        query={
-            'TimeStamp':{
-                '$gt':start,
-                '$lt':now
+        for factory in factorys:
+            if brand == 'woojin':
+                host = Variable.get("WOOJIN_MONGO_URL_SECRET")
+            elif brand == 'dongshin':
+                host = Variable.get("MONGO_URL_SECRET")
+            client = MongoClient(host)
+            db_result = client['result_log']
+            collection = db_result[f'log_{model_name}_{factory}']
+            query={
+                'TimeStamp':{
+                    '$gt':start,
+                    '$lt':now
+                    }
                 }
-            }
-        try:
-            df = pd.DataFrame(list(collection.find(query)))
-        except Exception as e:
-            print("mongo connection failer during pull",e)
-        print(df)
-        client.close()
-        if df.shape[0]==0:
-            print("empty")
-            break
-        df=df.drop_duplicates(subset=["_id"])
-        df.drop(columns={'_id'},inplace=True)
+            try:
+                df = pd.DataFrame(list(collection.find(query)))
+            except Exception as e:
+                print("mongo connection failer during pull",e)
+            print(df)
+            client.close()
+            if df.shape[0]==0:
+                print("empty")
+                break
+            df=df.drop_duplicates(subset=["_id"])
+            df.drop(columns={'_id'},inplace=True)
 
-        print(df.head())
+            print(df.head())
 
-    # for on premise
-        host = Variable.get("LOCAL_MONGO_URL_SECRET")
-        client = MongoClient(host)
-        db_model = client['result_log']
-        collection=db_model[f'teng_{model_name}']
-        collection.create_index([("TimeStamp",ASCENDING)],unique=True)
-        data=df.to_dict('records')
+        # for on premise
+            host = Variable.get("LOCAL_MONGO_URL_SECRET")
+            client = MongoClient(host)
+            db_model = client['result_log']
+            collection=db_model[f'teng_{model_name}']
+            collection.create_index([("TimeStamp",ASCENDING)],unique=True)
+            data=df.to_dict('records')
 
-        try:
-            collection.insert_many(data,ordered=False)
-        except Exception as e:
-            print("mongo connection failer during push",e)
-        client.close()
+            try:
+                collection.insert_many(data,ordered=False)
+            except Exception as e:
+                print("mongo connection failer during push",e)
+            client.close()
     print("hello push on premise")
     
 def which_path_woojin(**kwargs):
