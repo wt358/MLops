@@ -387,7 +387,7 @@ def push_onpremise(**kwargs):
             host = Variable.get("LOCAL_MONGO_URL_SECRET")
             client = MongoClient(host)
             db_model = client['result_log']
-            collection=db_model[f'teng_{model_name}']
+            collection=db_model[f'{model_name}_{factory}']
             collection.create_index([("TimeStamp",ASCENDING)],unique=True)
             data=df.to_dict('records')
 
@@ -563,7 +563,7 @@ with DAG(
             )
             
             infer_svm = KubernetesPodOperator(
-                task_id="main_infer_svm_pod_operator_"+j+'_'+num,
+                task_id="main_infer_svm_pod_operator_"+j+'_'+str(num),
                 name="main-infer-ocsvm",
                 namespace='airflow-cluster',
                 image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
