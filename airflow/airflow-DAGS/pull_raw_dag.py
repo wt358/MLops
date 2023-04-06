@@ -36,7 +36,7 @@ def pull_influx_woojin(**kwargs):
     token = Variable.get("WOOJIN_INFLUX_TOKEN")
     # Store the URL of your InfluxDB instance
     url= Variable.get("WOOJIN_INFLUX_URL")
-    start_date="-7d"
+    start_date="-365d"
 
     print("WooJin")
    
@@ -171,7 +171,7 @@ def pull_mssql_woojin(**kwargs):
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
-        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-14,GETDATE())")
+        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-36,GETDATE())")
         # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
         #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
         # MSSQL 접속
@@ -244,7 +244,7 @@ def pull_transform_dongshin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=50)
+        start = now - timedelta(days=7)
         print(start)
         query={
                 '_time':{
@@ -363,7 +363,7 @@ def pull_transform_woojin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=4)
+        start = now - timedelta(days=1000)
         print(start)
         query={
                 'TimeStamp':{
