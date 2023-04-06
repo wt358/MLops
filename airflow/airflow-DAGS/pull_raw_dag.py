@@ -382,7 +382,7 @@ def pull_transform_woojin(**kwargs):
             return
         df.drop(columns={'_id'},inplace=True)
 
-        df=df.drop_duplicates(subset=["idx"])
+        # df=df.drop_duplicates(subset=["idx"])
         df.drop(columns={'Mold_Temperature_1',
             'Mold_Temperature_2',
             'Mold_Temperature_3',
@@ -423,7 +423,6 @@ def pull_transform_woojin(**kwargs):
                                        ("Barrel_Temperature_1",ASCENDING),
                                        ("Max_Injection_Speed",ASCENDING),
                                        ("Cushion_Position",ASCENDING),
-                                       ("Plasticizing_Time",ASCENDING),
                                      ],unique=True)
         data=df.to_dict('records')
         try:
