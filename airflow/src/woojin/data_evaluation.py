@@ -176,7 +176,7 @@ def data_eval():
                                             'time', 'BestScore'] + list(best_param[name].keys())
             )
             print(output_df)
-            collection=db_test[f'{name}']
+            collection=db_test[f'{name}_{factory}']
             data=output_df.to_dict('records')
             try:
                 collection.insert_many(data, ordered=False)
