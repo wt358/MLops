@@ -253,7 +253,7 @@ def pull_transform_dongshin(**kwargs):
                     }
                 }
         try:
-            df = pd.DataFrame(list(collection_test1.find()))
+            df = pd.DataFrame(list(collection_test1.find(query)))
         except Exception as e: 
             print("mongo connection failed")
         
@@ -367,8 +367,8 @@ def pull_transform_woojin(**kwargs):
         print(start)
         query={
                 'TimeStamp':{
-                    '$gt':f'{start}',
-                    '$lt':f'{now}'
+                    '$gt':start,
+                    '$lt':now
                     }
                 }
         try:
