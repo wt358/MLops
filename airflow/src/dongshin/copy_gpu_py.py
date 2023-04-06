@@ -161,6 +161,7 @@ def iqr_mds_gan():
         if df.empty:
             print("empty")
             return
+            
         # consumer.close()
         # dataframe transform
         print(df.shape)
