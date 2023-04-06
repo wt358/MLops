@@ -345,321 +345,111 @@ def iqr_mds_gan():
 #provide the aug data that saved in the local to the aug topic in the kafka cluster
 def oc_svm():
     
-    mongoClient = MongoClient()
-    #host = Variable.get("MONGO_URL_SECRET")
-    host = os.environ['MONGO_URL_SECRET'] 
-    client = MongoClient(host)
-    
-    db_test = client['coops2022_aug']
-    collection_aug=db_test['mongo_aug1']
-    
-    try:
-        moldset_df = pd.DataFrame(list(collection_aug.find()))
+    factorys=params.woojin_factory_name
+    print(factorys)
+    for factory in factorys:
+        host = os.environ['MONGO_URL_SECRET'] 
+        client = MongoClient(host)
         
-    except:
-        print("mongo connection failed")
-        return False
-    
-    print(moldset_df)
-
-    moldset_9000R=moldset_df
-    
-
-    labled = pd.DataFrame(moldset_9000R, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position','Class'])
-    labled.columns = map(str.lower,labled.columns)
-    labled.rename(columns={'class':'label'},inplace=True)
-    print(labled.head())
-
-    target_columns = pd.DataFrame(labled, columns = ['cycle_time', 'cushion_position'])
-    target_columns.astype('float')
-     
-    db_model = client['coops2022_model']
-    fs = gridfs.GridFS(db_model)
-    collection_model=db_model['mongo_OCSVM']
-    
-    model_name = 'OC_SVM'
-    model_fpath = f'{model_name}.joblib'
-    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
-    print(result)
-    cnt=len(list(result.clone()))
-    print(result[0])
-    print(result[cnt-1])
-    try:
-        file_id = str(result[0]['file_id'])
-        model = LoadModel(mongo_id=file_id).clf
-    except Exception as e:
-        print("exception occured in oc_svm",e)
-        model = OneClassSVM(kernel = 'rbf', gamma = 0.001, nu = 0.04).fit(target_columns)
-    joblib.dump(model, model_fpath)
-    
-    print(model.get_params())
-    
-    y_pred = model.predict(target_columns)
-    print(y_pred)
-
-
-
-    # filter outlier index
-    outlier_index = np.where(y_pred == -1)
-
-    #filter outlier values
-    outlier_values = target_columns.iloc[outlier_index]
-    print(outlier_values)
-    
-    # 이상값은 -1으로 나타낸다.
-    score = model.fit(target_columns)
-    anomaly = model.predict(target_columns)
-    target_columns['anomaly']= anomaly
-    anomaly_data = target_columns.loc[target_columns['anomaly']==-1] 
-    print(target_columns['anomaly'].value_counts())
-
-    target_columns[target_columns['anomaly']==1] = 0
-    target_columns[target_columns['anomaly']==-1] = 1
-    target_columns['Anomaly'] = target_columns['anomaly'] > 0.5
-    y_test = target_columns['Anomaly']
-    
-    print(y_test.unique())
-
-    df = pd.DataFrame(labled, columns = ['label'])
-    print(df.label)
-    
-    outliers = df['label']
-    outliers = outliers.fillna(0)
-    print(outliers.unique())
-    print(outliers)
-
-    print(y_test)
-
-    outliers = outliers.to_numpy()
-    y_test = y_test.to_numpy()
-
-    # get (mis)classification
-    cf = confusion_matrix(outliers, y_test)
-
-    # true/false positives/negatives
-    print(cf)
-    (tn, fp, fn, tp) = cf.flatten()
-
-    print(f"""{cf}
-    % of transactions labeled as fraud that were correct (precision): {tp}/({fp}+{tp}) = {tp/(fp+tp):.2%}
-    % of fraudulent transactions were caught succesfully (recall):    {tp}/({fn}+{tp}) = {tp/(fn+tp):.2%}
-    % of g-mean value : root of (specificity)*(recall) = ({tn}/({fp}+{tn})*{tp}/({fn}+{tp})) = {(tn/(fp+tn)*tp/(fn+tp))**0.5 :.2%}""")
-    
-
-    
-    #save model in the DB
-    # save the local file to mongodb
-    with open(model_fpath, 'rb') as infile:
-        file_id = fs.put(
-                infile.read(), 
-                model_name=model_name
-                )
-    # insert the model status info to ModelStatus collection 
-    params = {
-            'model_name': model_name,
-            'file_id': file_id,
-            'inserted_time': datetime.now()
-            }
-    result = collection_model.insert_one(params)
-    client.close()
-
-    print("hello OC_SVM")
-
-def lstm_autoencoder():
-    mongoClient = MongoClient()
-    #host = Variable.get("MONGO_URL_SECRET")
-    host = os.environ['MONGO_URL_SECRET'] 
-    client = MongoClient(host)
-    
-    db_test = client['coops2022_aug']
-    collection_aug=db_test['mongo_aug1']
-    
-    try:
-        moldset_df = pd.DataFrame(list(collection_aug.find()))
+        db_test = client['aug_data']
+        today1=datetime.now().strftime("%Y-%m-%d")
+        collection_aug=db_test[f'aug_test_{factory}_{today1}']
         
-    except:
-        print("mongo connection failed")
-        return False
-    
-    print(moldset_df)
+        try:
+            moldset_df = pd.DataFrame(list(collection_aug.find()))
+            
+        except:
+            print("mongo connection failed")
+            return False
+        
+        print(moldset_df)
 
-    outlier = moldset_df[moldset_df.Class == 1]
-    print(outlier.head())
-    labled = pd.DataFrame(moldset_df, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position','Class'])
+        moldset_9000R=moldset_df
+        
 
-    labled.columns = map(str.lower,labled.columns)
-    labled.rename(columns={'class':'label'},inplace=True)
-    print(labled.head()) 
-    
-    
+        labled = pd.DataFrame(moldset_9000R, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position','Class'])
+        labled.columns = map(str.lower,labled.columns)
+        labled.rename(columns={'class':'label'},inplace=True)
+        print(labled.head())
 
-    # splitting by class
-    fraud = labled[labled.label == 1]
-    clean = labled[labled.label == 0]
-
-    print(f"""Shape of the datasets:
-        clean (rows, cols) = {clean.shape}
-        fraud (rows, cols) = {fraud.shape}""")
-    
-    # shuffle our training set
-    clean = clean.sample(frac=1).reset_index(drop=True)
-
-    # training set: exlusively non-fraud transactions
-    global TRAINING_SAMPLE 
-    if clean.shape[0] < TRAINING_SAMPLE:
-        TRAINING_SAMPLE=(clean.shape[0]//5)*4
-
-    X_train = clean.iloc[:TRAINING_SAMPLE].drop('label', axis=1)
-    train = clean.iloc[:TRAINING_SAMPLE].drop('label', axis=1)
-
-    # testing  set: the remaining non-fraud + all the fraud 
-    X_test = clean.iloc[TRAINING_SAMPLE:].append(fraud).sample(frac=1)
-    test = clean.iloc[TRAINING_SAMPLE:].append(fraud).sample(frac=1)
-    test.drop('label', axis = 1, inplace = True)
-    # 여기 test set이랑 train set 겹침
-
-    print(f"""Our testing set is composed as follows:
-
-            {X_test.label.value_counts()}""")
-    
-    X_test, y_test = X_test.drop('label', axis=1).values, X_test.label.values
-
-    print(f"""Shape of the datasets:
-        training (rows, cols) = {X_train.shape}
-        Testing  (rows, cols) = {X_test.shape}""")
-
-    with tf.device("/gpu:0"):
-
-        # transforming data from the time domain to the frequency domain using fast Fourier transform
-        train_fft = np.fft.fft(X_train)
-        test_fft = np.fft.fft(X_test)
-
-        scaler = MinMaxScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
-        scaler_filename = "scaler_data"
-
-        # reshape inputs for LSTM [samples, timesteps, features]
-        X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[1])
-        print("Training data shape:", X_train.shape)
-        X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
-        print("Test data shape:", X_test.shape)
-       
-        #scaler and lstm autoencoder model save
-        db_model = client['coops2022_model']
+        target_columns = pd.DataFrame(labled, columns = ['cycle_time', 'cushion_position'])
+        target_columns.astype('float')
+        
+        db_model = client['model_var']
         fs = gridfs.GridFS(db_model)
-        collection_model=db_model['mongo_scaler_lstm']
-       
-        model_fpath = f'{scaler_filename}.joblib'
-        joblib.dump(scaler, model_fpath)
+        collection_model=db_model[f'OCSVM_{factory}']
         
-        # save the local file to mongodb
-        with open(model_fpath, 'rb') as infile:
-            file_id = fs.put(
-                    infile.read(), 
-                    model_name=scaler_filename
-                    )
-        # insert the model status info to ModelStatus collection 
-        params = {
-                'model_name': scaler_filename,
-                'file_id': file_id,
-                'inserted_time': datetime.now()
-                }
-        result = collection_model.insert_one(params)
-
-
-        # load the model
-        collection_model=db_model['mongo_LSTM_autoencoder']
-        
-        model_name = 'LSTM_autoencoder'
+        model_name = 'OC_SVM'
         model_fpath = f'{model_name}.joblib'
         result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
         print(result)
         cnt=len(list(result.clone()))
-        print(cnt)
         print(result[0])
         print(result[cnt-1])
         try:
             file_id = str(result[0]['file_id'])
             model = LoadModel(mongo_id=file_id).clf
         except Exception as e:
-            print("exception occured in lstm ae",e)
-            model = autoencoder_model(X_train)
-        
+            print("exception occured in oc_svm",e)
+            model = OneClassSVM(kernel = 'rbf', gamma = 0.001, nu = 0.04).fit(target_columns)
         joblib.dump(model, model_fpath)
         
-        model.compile(optimizer='adam', loss='mae')
+        print(model.get_params())
+        
+        y_pred = model.predict(target_columns)
+        print(y_pred)
+
+
+
+        # filter outlier index
+        outlier_index = np.where(y_pred == -1)
+
+        #filter outlier values
+        outlier_values = target_columns.iloc[outlier_index]
+        print(outlier_values)
         
         # 이상값은 -1으로 나타낸다.
-        print(model.summary())
+        score = model.fit(target_columns)
+        anomaly = model.predict(target_columns)
+        target_columns['anomaly']= anomaly
+        anomaly_data = target_columns.loc[target_columns['anomaly']==-1] 
+        print(target_columns['anomaly'].value_counts())
 
-        nb_epochs = 100
-        batch_size = 10
-        history = model.fit(X_train, X_train, epochs=nb_epochs, batch_size=batch_size, validation_split=0.05).history
-
-        X_pred = model.predict(X_train)
-        X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
-        X_pred = pd.DataFrame(X_pred, columns=train.columns)
-        X_pred.index = train.index
-
-        scored = pd.DataFrame(index=train.index)
-        Xtrain = X_train.reshape(X_train.shape[0], X_train.shape[2])
-        scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtrain), axis = 1)
-
-        plt.figure(figsize=(16,9), dpi=80)
-        plt.title('Loss Distribution', fontsize=16)
-        sns.distplot(scored['Loss_mae'], bins = 20, kde= True, color = 'blue');
-        plt.xlim([0.0,.5])
-        plt.show()
-
-
-        # calculate the loss on the test set
-        X_pred = model.predict(X_test)
-        X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
-        X_pred = pd.DataFrame(X_pred, columns=test.columns)
-        X_pred.index = test.index
-
-        scored = pd.DataFrame(index=test.index)
-        Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
-        scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
-        scored['Threshold'] = 0.1
-        scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
-        scored['label'] = labled['label']
-        print(scored.head())
-
-
-        y_test = scored['Anomaly']
+        target_columns[target_columns['anomaly']==1] = 0
+        target_columns[target_columns['anomaly']==-1] = 1
+        target_columns['Anomaly'] = target_columns['anomaly'] > 0.5
+        y_test = target_columns['Anomaly']
+        
         print(y_test.unique())
 
-        print(scored[scored['Anomaly']==True].label.count())
-        print(scored.label.unique())
-
-        outliers = scored['label']
+        df = pd.DataFrame(labled, columns = ['label'])
+        print(df.label)
+        
+        outliers = df['label']
         outliers = outliers.fillna(0)
         print(outliers.unique())
+        print(outliers)
+
+        print(y_test)
 
         outliers = outliers.to_numpy()
         y_test = y_test.to_numpy()
-        print(y_test)
-        cm = confusion_matrix(y_test, outliers)
-        (tn, fp, fn, tp) = cm.flatten()
-        
-        print(f"""{cm}
+
+        # get (mis)classification
+        cf = confusion_matrix(outliers, y_test)
+
+        # true/false positives/negatives
+        print(cf)
+        (tn, fp, fn, tp) = cf.flatten()
+
+        print(f"""{cf}
         % of transactions labeled as fraud that were correct (precision): {tp}/({fp}+{tp}) = {tp/(fp+tp):.2%}
         % of fraudulent transactions were caught succesfully (recall):    {tp}/({fn}+{tp}) = {tp/(fn+tp):.2%}
         % of g-mean value : root of (specificity)*(recall) = ({tn}/({fp}+{tn})*{tp}/({fn}+{tp})) = {(tn/(fp+tn)*tp/(fn+tp))**0.5 :.2%}""")
-
-        print(roc_auc_score(outliers, y_test))
-    
-    
-        db_model = client['coops2022_model']
-        fs = gridfs.GridFS(db_model)
-        collection_model=db_model['mongo_LSTM_autoencoder']
-       
-        model_name = 'LSTM_autoencoder'
-        model_fpath = f'{model_name}.joblib'
-        joblib.dump(model, model_fpath)
         
+
+        
+        #save model in the DB
         # save the local file to mongodb
         with open(model_fpath, 'rb') as infile:
             file_id = fs.put(
@@ -673,7 +463,220 @@ def lstm_autoencoder():
                 'inserted_time': datetime.now()
                 }
         result = collection_model.insert_one(params)
-    client.close()
+        client.close()
+
+    print("hello OC_SVM")
+
+def lstm_autoencoder():
+    factorys=params.woojin_factory_name
+    print(factorys)
+    for factory in factorys:
+        host = os.environ['MONGO_URL_SECRET'] 
+        client = MongoClient(host)
+        
+        db_test = client['aug_data']
+        today1=datetime.now().strftime("%Y-%m-%d")
+        collection_aug=db_test[f'aug_test_{factory}_{today1}']
+        
+        try:
+            moldset_df = pd.DataFrame(list(collection_aug.find()))
+        except:
+            print("mongo connection failed")
+            return False
+        
+        print(moldset_df)
+
+        outlier = moldset_df[moldset_df.Class == 1]
+        print(outlier.head())
+        labled = pd.DataFrame(moldset_df, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position','Class'])
+
+        labled.columns = map(str.lower,labled.columns)
+        labled.rename(columns={'class':'label'},inplace=True)
+        print(labled.head()) 
+        
+        
+
+        # splitting by class
+        fraud = labled[labled.label == 1]
+        clean = labled[labled.label == 0]
+
+        print(f"""Shape of the datasets:
+            clean (rows, cols) = {clean.shape}
+            fraud (rows, cols) = {fraud.shape}""")
+        
+        # shuffle our training set
+        clean = clean.sample(frac=1).reset_index(drop=True)
+
+        # training set: exlusively non-fraud transactions
+        global TRAINING_SAMPLE 
+        if clean.shape[0] < TRAINING_SAMPLE:
+            TRAINING_SAMPLE=(clean.shape[0]//5)*4
+
+        X_train = clean.iloc[:TRAINING_SAMPLE].drop('label', axis=1)
+        train = clean.iloc[:TRAINING_SAMPLE].drop('label', axis=1)
+
+        # testing  set: the remaining non-fraud + all the fraud 
+        X_test = clean.iloc[TRAINING_SAMPLE:].append(fraud).sample(frac=1)
+        test = clean.iloc[TRAINING_SAMPLE:].append(fraud).sample(frac=1)
+        test.drop('label', axis = 1, inplace = True)
+        # 여기 test set이랑 train set 겹침
+
+        print(f"""Our testing set is composed as follows:
+
+                {X_test.label.value_counts()}""")
+        
+        X_test, y_test = X_test.drop('label', axis=1).values, X_test.label.values
+
+        print(f"""Shape of the datasets:
+            training (rows, cols) = {X_train.shape}
+            Testing  (rows, cols) = {X_test.shape}""")
+
+        with tf.device("/gpu:0"):
+
+            # transforming data from the time domain to the frequency domain using fast Fourier transform
+            train_fft = np.fft.fft(X_train)
+            test_fft = np.fft.fft(X_test)
+
+            scaler = MinMaxScaler()
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
+            scaler_filename = "scaler_data"
+
+            # reshape inputs for LSTM [samples, timesteps, features]
+            X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[1])
+            print("Training data shape:", X_train.shape)
+            X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
+            print("Test data shape:", X_test.shape)
+        
+            #scaler and lstm autoencoder model save
+            db_model = client['model_var']
+            fs = gridfs.GridFS(db_model)
+            collection_model=db_model[f'scaler_lstm_{factory}']
+        
+            model_fpath = f'{scaler_filename}.joblib'
+            joblib.dump(scaler, model_fpath)
+            
+            # save the local file to mongodb
+            with open(model_fpath, 'rb') as infile:
+                file_id = fs.put(
+                        infile.read(), 
+                        model_name=scaler_filename
+                        )
+            # insert the model status info to ModelStatus collection 
+            params = {
+                    'model_name': scaler_filename,
+                    'file_id': file_id,
+                    'inserted_time': datetime.now()
+                    }
+            result = collection_model.insert_one(params)
+
+
+            # load the model
+            collection_model=db_model['mongo_LSTM_autoencoder']
+            
+            model_name = 'LSTM_autoencoder'
+            model_fpath = f'{model_name}.joblib'
+            result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+            print(result)
+            cnt=len(list(result.clone()))
+            print(cnt)
+            print(result[0])
+            print(result[cnt-1])
+            try:
+                file_id = str(result[0]['file_id'])
+                model = LoadModel(mongo_id=file_id).clf
+            except Exception as e:
+                print("exception occured in lstm ae",e)
+                model = autoencoder_model(X_train)
+            
+            joblib.dump(model, model_fpath)
+            
+            model.compile(optimizer='adam', loss='mae')
+            
+            # 이상값은 -1으로 나타낸다.
+            print(model.summary())
+
+            nb_epochs = 100
+            batch_size = 10
+            history = model.fit(X_train, X_train, epochs=nb_epochs, batch_size=batch_size, validation_split=0.05).history
+
+            X_pred = model.predict(X_train)
+            X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
+            X_pred = pd.DataFrame(X_pred, columns=train.columns)
+            X_pred.index = train.index
+
+            scored = pd.DataFrame(index=train.index)
+            Xtrain = X_train.reshape(X_train.shape[0], X_train.shape[2])
+            scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtrain), axis = 1)
+
+            plt.figure(figsize=(16,9), dpi=80)
+            plt.title('Loss Distribution', fontsize=16)
+            sns.distplot(scored['Loss_mae'], bins = 20, kde= True, color = 'blue');
+            plt.xlim([0.0,.5])
+            plt.show()
+
+
+            # calculate the loss on the test set
+            X_pred = model.predict(X_test)
+            X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
+            X_pred = pd.DataFrame(X_pred, columns=test.columns)
+            X_pred.index = test.index
+
+            scored = pd.DataFrame(index=test.index)
+            Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
+            scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
+            scored['Threshold'] = 0.1
+            scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
+            scored['label'] = labled['label']
+            print(scored.head())
+
+
+            y_test = scored['Anomaly']
+            print(y_test.unique())
+
+            print(scored[scored['Anomaly']==True].label.count())
+            print(scored.label.unique())
+
+            outliers = scored['label']
+            outliers = outliers.fillna(0)
+            print(outliers.unique())
+
+            outliers = outliers.to_numpy()
+            y_test = y_test.to_numpy()
+            print(y_test)
+            cm = confusion_matrix(y_test, outliers)
+            (tn, fp, fn, tp) = cm.flatten()
+            
+            print(f"""{cm}
+            % of transactions labeled as fraud that were correct (precision): {tp}/({fp}+{tp}) = {tp/(fp+tp):.2%}
+            % of fraudulent transactions were caught succesfully (recall):    {tp}/({fn}+{tp}) = {tp/(fn+tp):.2%}
+            % of g-mean value : root of (specificity)*(recall) = ({tn}/({fp}+{tn})*{tp}/({fn}+{tp})) = {(tn/(fp+tn)*tp/(fn+tp))**0.5 :.2%}""")
+
+            print(roc_auc_score(outliers, y_test))
+        
+        
+            db_model = client['model_var']
+            fs = gridfs.GridFS(db_model)
+            collection_model=db_model[f'LSTM_autoencoder_{factory}']
+        
+            model_name = 'LSTM_autoencoder'
+            model_fpath = f'{model_name}.joblib'
+            joblib.dump(model, model_fpath)
+            
+            # save the local file to mongodb
+            with open(model_fpath, 'rb') as infile:
+                file_id = fs.put(
+                        infile.read(), 
+                        model_name=model_name
+                        )
+            # insert the model status info to ModelStatus collection 
+            params = {
+                    'model_name': model_name,
+                    'file_id': file_id,
+                    'inserted_time': datetime.now()
+                    }
+            result = collection_model.insert_one(params)
+        client.close()
 
     print("hello auto encoder")
 

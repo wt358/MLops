@@ -28,12 +28,11 @@ class LoadModel(metaclass=ModelSingleton):
    def load_model(self):
        print('loading model')
 
-       mongoClient = MongoClient()
        #host = Variable.get("MONGO_URL_SECRET")
        host = os.environ['MONGO_URL_SECRET'] 
        client = MongoClient(host)
 
-       db_model = client['coops2022_model']
+       db_model = client['model_var']
        fs = gridfs.GridFS(db_model)
        print(self.mongo_id)
        f = fs.find({"_id": ObjectId(self.mongo_id)}).next()
@@ -47,7 +46,7 @@ def SaveModel(model,collection_name,model_name,train_dt):
     print('saving model...')
     host = os.environ['MONGO_URL_SECRET']
     client=MongoClient(host)
-    db_model = client['coops2022_model']
+    db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
     collection_model = db_model[collection_name]
        
