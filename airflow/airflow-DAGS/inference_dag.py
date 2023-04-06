@@ -491,7 +491,6 @@ with DAG(
     #     retries=0,
     #     retry_delay=timedelta(minutes=1),
     # )
-    num=0
     for i in molding_brand_name:
         i=i.lower()
         fact=f'{i}_factory_name'
@@ -508,7 +507,6 @@ with DAG(
             trigger_rule='none_failed_min_one_success',
         )
         for j in fact_list:
-            num=num+1
             original_fact=j
             j=j.lower()
             dummy1 = DummyOperator(task_id="path1_"+j)
@@ -563,7 +561,7 @@ with DAG(
             )
             
             infer_svm = KubernetesPodOperator(
-                task_id="main_infer_svm_pod_operator_"+j+'_'+str(num),
+                task_id="main_infer_svm_pod_operator_"+j,
                 name="main-infer-ocsvm",
                 namespace='airflow-cluster',
                 image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
@@ -583,7 +581,28 @@ with DAG(
                 get_logs=True,
                 startup_timeout_seconds=600,
             )
-
+            
+            infer_vari= KubernetesPodOperator(
+                task_id="vari_infer_svm_pod_operator_"+j,
+                name="vari-infer-ocsvm",
+                namespace='airflow-cluster',
+                image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
+                # image_pull_policy="Always",
+                # image_pull_policy="IfNotPresent",
+                image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+                cmds=["sh"],
+                arguments=["command.sh",i, "infer_vari"],
+                affinity=cpu_aff,
+                # resources=pod_resources,
+                secrets=[eval('secret_'+j), secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
+                        secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb],
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
+                # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
+                # configmaps=configmaps,
+                is_delete_operator_pod=True,
+                get_logs=True,
+                startup_timeout_seconds=600,
+            )
             # 테스크 순서를 정합니다.
             # t1 실행 후 t2를 실행합니다.
             dummy1 >> main_or_vari
@@ -600,6 +619,6 @@ with DAG(
 
                 elif path == 'path_vari':
                     # main_or_vari>>t>>infer_tadgan
-                    main_or_vari>>t>>infer_svm >> t2
+                    main_or_vari>>t>>infer_vari>> t2
 
 
