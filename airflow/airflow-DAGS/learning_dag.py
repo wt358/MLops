@@ -361,6 +361,7 @@ for i in molding_brand_name:
     fact=f'{i}_factory_name'
     fact_list=eval(fact)
     for j in fact_list:
+        original_fact=j
         j=j.lower()
         start = DummyOperator(task_id=f"start_{j}", dag=dag)
         run_iqr = KubernetesPodOperator(
@@ -375,7 +376,7 @@ for i in molding_brand_name:
                 affinity=gpu_aff,
                 #resources=pod_resources,
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 #env_vars={'MONGO_URL_SECRET':'{{var.value.MONGO_URL_SECRET}}'},
                 #configmaps=configmaps,
                 is_delete_operator_pod=True,
@@ -396,7 +397,7 @@ for i in molding_brand_name:
                 affinity=gpu_aff,
                 #resources=pod_resources,
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 #configmaps=configmaps,
                 is_delete_operator_pod=True,
@@ -416,7 +417,7 @@ for i in molding_brand_name:
                 affinity=gpu_aff,
                 #resources=pod_resources,
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 #configmaps=configmaps,
                 is_delete_operator_pod=True,
@@ -431,7 +432,7 @@ for i in molding_brand_name:
                 #image_pull_policy="Always",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 cmds=["sh" ],
                 arguments=["command.sh",i,"oc_svm"],
                 affinity=cpu_aff,
@@ -447,7 +448,7 @@ for i in molding_brand_name:
                 #image_pull_policy="Always",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
-                env_vars={'EXECUTION_DATE':"{{ds}}"},
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 cmds=["sh" ],
                 arguments=["command.sh",i,"eval"],
                 affinity=cpu_aff,
@@ -482,5 +483,5 @@ for i in molding_brand_name:
                 after_aug >> run_eval
             elif path == 'path_vari':
                 # main_or_vari >> t >> run_tadgan
-                main_or_vari >> t 
+                main_or_vari >> t
                 

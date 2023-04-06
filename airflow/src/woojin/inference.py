@@ -53,28 +53,28 @@ def infer_tad():
 
     print("hello inference tad")
     
-def infer_vari():
+def infer_ocsvm():
     #data consumer
     now = datetime.now()
     curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
     print(os.environ['EXECUTION_DATE'])
-    consumer = KafkaConsumer('test.coops2022_etl.etl_data',
-            group_id=f'Inference_vari_model_{curr_time}',
-            bootstrap_servers=['kafka-clust-kafka-persis-d198b-11683092-d3d89e335b84.kr.lb.naverncp.com:9094'],
-            value_deserializer=lambda x: loads(x.decode('utf-8')),
-            auto_offset_reset='earliest',
-            consumer_timeout_ms=10000
-            )
+    # consumer = KafkaConsumer('test.coops2022_etl.etl_data',
+    #         group_id=f'Inference_vari_model_{curr_time}',
+    #         bootstrap_servers=['kafka-clust-kafka-persis-d198b-11683092-d3d89e335b84.kr.lb.naverncp.com:9094'],
+    #         value_deserializer=lambda x: loads(x.decode('utf-8')),
+    #         auto_offset_reset='earliest',
+    #         consumer_timeout_ms=10000
+    #         )
     #consumer.poll(timeout_ms=1000, max_records=2000)
 
     #dataframe extract
-    l=[]
+    # l=[]
 
-    for message in consumer:
-        message = message.value
-        l.append(loads(message['payload'])['fullDocument'])
-    df = pd.DataFrame(l)
-    consumer.close()
+    # for message in consumer:
+    #     message = message.value
+    #     l.append(loads(message['payload'])['fullDocument'])
+    # df = pd.DataFrame(l)
+    # consumer.close()
     print(df)
     if df.empty:
         print("empty queue")
@@ -423,6 +423,4 @@ def infer_lstm():
 
     print("hello inference lstm ae")
     
-def infer_ocsvm():
-    print("hello inference ocsvm")
     
