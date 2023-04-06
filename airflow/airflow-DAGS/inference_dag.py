@@ -583,7 +583,7 @@ with DAG(
             
             for path in paths:
                 t = DummyOperator(
-                    task_id=path+'-'+j,
+                    task_id=path+'_'+j,
                     dag=dag,
                     )
                 
