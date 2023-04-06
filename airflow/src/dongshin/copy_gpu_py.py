@@ -129,346 +129,558 @@ def iqr_mds_gan():
     #         )
     #consumer.poll(timeout_ms=1000, max_records=2000)
 
-    factorys=params.woojin_factory_name
-    print(factorys)
-    for factory in factorys:
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    print(factory)
+    db_test = client['etl_data']
+    collection_etl=db_test[f'etl_{factory}']
+    #dataframe extract
+    # l=[]
+    start=now-timedelta(days=7)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                '$lt':now
+                }
+            }
+    # for message in consumer:
+    #     message = message.value
+    #     try:
+    #         l.append(loads(message['payload'])['fullDocument'])
+    #     except:
+    #         print(message)
+    # df = pd.DataFrame(l)
+    try:
+        df = pd.DataFrame(list(collection_etl.find(query)))
+    except Exception as e:
+        print("mongo connection failed", e)
+    print(df)
+    if df.empty:
+        print("empty")
+        return
+        
+    # consumer.close()
+    # dataframe transform
+    print(df.shape)
+    print(df.columns)
+    print(df)
+
+    df.drop(columns={'_id',
+        },inplace=True)
+    df.rename(columns={'_time':'TimeStamp'},inplace=True)
+    df['TimeStamp']=df['TimeStamp'].apply(lambda x : x['$date'])
+    df['TimeStamp']=df['TimeStamp'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
+    df=df[['TimeStamp',
+            'All_Mold_Number', 'Injection_Time', 'Machine_Process_Time',
+            'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring', 'Product_Process_Time', 'Reservation_Mold_Number',
+            'Screw_Position', 'Weighing_Speed',
+            ]]
+
+        #IQR
+    print(df)
+    print(df.dtypes)
+    
+    df=df.reset_index(drop=True)
+    section=df
+    section=IQR(section)
+    print(section)
+
+    # data frame 자르기
+    last_idx = 0
+    curr_idx = 0
+
+    # 자른 데이터프레임을 저장할 리스트
+    pds = []
+    section=section.reset_index(drop=True)
+    print(section.index.tolist())
+    for idx in range(1,len(section.index.tolist())):
+        # print(moldset_labeled_9000R.loc[idx,'TimeStamp'])
+        time_to_compare1 = datetime.strptime(section.loc[idx,'TimeStamp'], "%Y-%m-%d %H:%M:%S")
+        time_to_compare2 = datetime.strptime(section.loc[idx-1,'TimeStamp'], "%Y-%m-%d %H:%M:%S")
+        time_diff = time_to_compare1 - time_to_compare2
+
+        # 분 단위로 비교
+        if time_diff.seconds / 60 > 15:
+            curr_idx = idx-1
+            pds.append(section.truncate(before=last_idx, after=curr_idx,axis=0))
+            last_idx = idx
+
+    else:
+        pds.append(section.truncate(before=last_idx, after=len(section.index.tolist())-1,axis=0))
+
+    for i in range(len(pds)):
+        print(i, pds[i].count().max())
+
+    print(pds[0])
+    df_all=MDS_molding(pds)
+
+    print(df_all)
+    print(df_all.columns)
+
+    #GAN
+
+    df=df_all
+    df['Class'] = df_all['Class'].map(lambda x: 1 if x == -1 else 0)
+
+    print(df)
+    print(df['Class'].value_counts(normalize=True)*100)
+
+    print(f"Number of Null values: {df.isnull().any().sum()}")
+
+    print(f"Dataset has {df.duplicated().sum()} duplicate rows")
+
+    df=df.dropna()
+    df.drop_duplicates(inplace=True)
+    try:
+        df.drop(columns={'Labeling'}
+                ,inplace=True)
+    except:
+        print("passed")
+    
+
+    print(df)
+
+    # checking skewness of other columns
+
+    print(df.drop('Class',1).skew())
+    
+    # skew_cols = df.iloc[:,5:].drop('Class',1).skew().loc[lambda x: x>2].index
+    # print(skew_cols)
+
+    # print(device_lib.list_local_devices())
+    # print(tf.config.list_physical_devices())
+    
+    with tf.device("/gpu:0"):
+    #     for col in skew_cols:
+    #         lower_lim = abs(df[col].min())
+    #         normal_col = df[col].apply(lambda x: np.log10(x+lower_lim+1))
+    #         print(f"Skew value of {col} after log transform: {normal_col.skew()}")
+    
+    #     scaler = StandardScaler()
+    #     #scaler = MinMaxScaler()
+    #     X = scaler.fit_transform(df.iloc[:,5:].drop('Class', 1))
+    #     y = df['Class'].values
+    #     print(X.shape, y.shape)
+
+    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, stratify=y)
+
+
+    #     gan = buildGAN(out_shape=X_train.shape[1], num_classes=2)
+    #     # cgan.out_shape=X_train.shape[1]
+
+    #     y_train = y_train.reshape(-1,1)
+    #     pos_index = np.where(y_train==1)[0]
+    #     neg_index = np.where(y_train==0)[0]
+    #     gan.train(X_train, y_train, pos_index, neg_index, epochs=50)#원래 epochs= 5000
+
+    #     print(df.shape)
+    #     print(X_train.shape)
+    #     gan_num=df.shape[0]
+    #     noise = np.random.normal(0, 1, (gan_num, 32))
+    #     sampled_labels = np.ones(gan_num).reshape(-1, 1)
+
+    #     gen_samples = gan.generator.predict([noise, sampled_labels])
+    #     gen_samples = scaler.inverse_transform(gen_samples)
+    #     print(gen_samples.shape)
+
+    #     gen_df = pd.DataFrame(data = gen_samples,
+    #             columns = df.iloc[:,5:].drop('Class',1).columns)
+    #     gen_df['Class'] = 1
+    #     print(gen_df)
+
+    #     Class0 = df[df['Class'] == 0 ]
+    #     print(Class0)
+
+    #     pca = PCA(n_components = 2)
+    #     PC = pca.fit_transform(gen_df)
+    #     PCdf = pca.fit_transform(Class0.iloc[:,5:])
+
+    #     VarRatio = pca.explained_variance_ratio_
+    #     VarRatio = pd.DataFrame(np.round_(VarRatio,3))
+
+    #     CumVarRatio    = np.cumsum(pca.explained_variance_ratio_)
+    #     CumVarRatio_df = pd.DataFrame(np.round_(CumVarRatio,3))
+
+    #     Result = pd.concat([VarRatio , CumVarRatio_df], axis=1)
+    #     print(pd.DataFrame(Result))
+    #     print(pd.DataFrame(PC))
+
+    #     pca3 = PCA(n_components = 3)
+    #     PC3 = pca3.fit_transform(gen_df)
+    #     PC_df = pca3.fit_transform(Class0.iloc[:,5:])
+
+    #     VarRatio3 = pca3.explained_variance_ratio_
+    #     VarRatio3 = pd.DataFrame(np.round_(VarRatio3,3))
+
+    #     CumVarRatio3    = np.cumsum(pca3.explained_variance_ratio_)
+    #     CumVarRatio_df3 = pd.DataFrame(np.round_(CumVarRatio3,3))
+
+    #     Result3 = pd.concat([VarRatio3 , CumVarRatio_df3], axis=1)
+    #     print(pd.DataFrame(Result3))
+    #     print(pd.DataFrame(PC3))
+
+    #     augdata = pd.concat([pd.DataFrame(Class0), gen_df])
+    #     Augdata = augdata.reset_index(drop=True)
+    #     print(Augdata)
+    #     print(Augdata['Class'].value_counts(normalize=True)*100)
+    #     Augdata['TimeStamp']=pd.to_datetime(Augdata['TimeStamp'],unit='s')
+        Augdata=df
+        #host = Variable.get("MONGO_URL_SECRET")
         host = os.environ['MONGO_URL_SECRET'] 
         client = MongoClient(host)
-        print(factory)
-        db_test = client['etl_data']
-        collection_etl=db_test[f'etl_{factory}']
-        #dataframe extract
-        # l=[]
-        start=now-timedelta(days=7)
-        query={
-                'TimeStamp':{
-                    '$gt':start,
-                    '$lt':now
-                    }
-                }
-        # for message in consumer:
-        #     message = message.value
-        #     try:
-        #         l.append(loads(message['payload'])['fullDocument'])
-        #     except:
-        #         print(message)
-        # df = pd.DataFrame(l)
+
+        db_test = client['aug_data']
+        today1=datetime.now().strftime("%Y-%m-%d")
+        collection_aug=db_test[f'aug_test_{factory}_{today1}']
+        collection_aug.create_index([("TimeStamp",ASCENDING)],unique=True)
+        data=Augdata.to_dict('records')
+    # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
         try:
-            df = pd.DataFrame(list(collection_etl.find(query)))
+            # isData = collection_aug.find_one()
+            # if len(isData) !=0:
+            #     print("collection is not empty")
+            #     collection_aug.delete_many({})
+            # try:
+            #     result = collection_aug.insert_many(data,ordered=False)
+            # except Exception as e:
+            #     print("mongo connection failed", e)
+            result = collection_aug.insert_many(data,ordered=False)
         except Exception as e:
+            # print("there is no collection")
+            # try:
+            #     result = collection_aug.insert_many(data,ordered=False)
+            # except Exception as e:
+            #     print("mongo connection failed", e)
             print("mongo connection failed", e)
-        print(df)
-        if df.empty:
-            print("empty")
-            return
-            
-        # consumer.close()
-        # dataframe transform
-        print(df.shape)
-        print(df.columns)
-        print(df)
-
-        df.drop(columns={'_id',
-            },inplace=True)
-        df.rename(columns={'_time':'TimeStamp'},inplace=True)
-        df['TimeStamp']=df['TimeStamp'].apply(lambda x : x['$date'])
-        df['TimeStamp']=df['TimeStamp'].apply(lambda x : datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
-        df=df[['TimeStamp',
-                'All_Mold_Number', 'Injection_Time', 'Machine_Process_Time',
-                'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring', 'Product_Process_Time', 'Reservation_Mold_Number',
-                'Screw_Position', 'Weighing_Speed',
-                ]]
-
-            #IQR
-        print(df)
-        print(df.dtypes)
-        
-        df=df.reset_index(drop=True)
-        section=df
-        section=IQR(section)
-        print(section)
-
-        # data frame 자르기
-        last_idx = 0
-        curr_idx = 0
-
-        # 자른 데이터프레임을 저장할 리스트
-        pds = []
-        section=section.reset_index(drop=True)
-        print(section.index.tolist())
-        for idx in range(1,len(section.index.tolist())):
-            # print(moldset_labeled_9000R.loc[idx,'TimeStamp'])
-            time_to_compare1 = datetime.strptime(section.loc[idx,'TimeStamp'], "%Y-%m-%d %H:%M:%S")
-            time_to_compare2 = datetime.strptime(section.loc[idx-1,'TimeStamp'], "%Y-%m-%d %H:%M:%S")
-            time_diff = time_to_compare1 - time_to_compare2
-
-            # 분 단위로 비교
-            if time_diff.seconds / 60 > 15:
-                curr_idx = idx-1
-                pds.append(section.truncate(before=last_idx, after=curr_idx,axis=0))
-                last_idx = idx
-
-        else:
-            pds.append(section.truncate(before=last_idx, after=len(section.index.tolist())-1,axis=0))
-
-        for i in range(len(pds)):
-            print(i, pds[i].count().max())
-
-        print(pds[0])
-        df_all=MDS_molding(pds)
-
-        print(df_all)
-        print(df_all.columns)
-
-        #GAN
-
-        df=df_all
-        df['Class'] = df_all['Class'].map(lambda x: 1 if x == -1 else 0)
-
-        print(df)
-        print(df['Class'].value_counts(normalize=True)*100)
-
-        print(f"Number of Null values: {df.isnull().any().sum()}")
-
-        print(f"Dataset has {df.duplicated().sum()} duplicate rows")
-
-        df=df.dropna()
-        df.drop_duplicates(inplace=True)
-        try:
-            df.drop(columns={'Labeling'}
-                    ,inplace=True)
-        except:
-            print("passed")
-        
-
-        print(df)
-
-        # checking skewness of other columns
-
-        print(df.drop('Class',1).skew())
-        
-        # skew_cols = df.iloc[:,5:].drop('Class',1).skew().loc[lambda x: x>2].index
-        # print(skew_cols)
-
-        # print(device_lib.list_local_devices())
-        # print(tf.config.list_physical_devices())
-        
-        with tf.device("/gpu:0"):
-        #     for col in skew_cols:
-        #         lower_lim = abs(df[col].min())
-        #         normal_col = df[col].apply(lambda x: np.log10(x+lower_lim+1))
-        #         print(f"Skew value of {col} after log transform: {normal_col.skew()}")
-        
-        #     scaler = StandardScaler()
-        #     #scaler = MinMaxScaler()
-        #     X = scaler.fit_transform(df.iloc[:,5:].drop('Class', 1))
-        #     y = df['Class'].values
-        #     print(X.shape, y.shape)
-
-        #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, stratify=y)
-
-
-        #     gan = buildGAN(out_shape=X_train.shape[1], num_classes=2)
-        #     # cgan.out_shape=X_train.shape[1]
-
-        #     y_train = y_train.reshape(-1,1)
-        #     pos_index = np.where(y_train==1)[0]
-        #     neg_index = np.where(y_train==0)[0]
-        #     gan.train(X_train, y_train, pos_index, neg_index, epochs=50)#원래 epochs= 5000
-
-        #     print(df.shape)
-        #     print(X_train.shape)
-        #     gan_num=df.shape[0]
-        #     noise = np.random.normal(0, 1, (gan_num, 32))
-        #     sampled_labels = np.ones(gan_num).reshape(-1, 1)
-
-        #     gen_samples = gan.generator.predict([noise, sampled_labels])
-        #     gen_samples = scaler.inverse_transform(gen_samples)
-        #     print(gen_samples.shape)
-
-        #     gen_df = pd.DataFrame(data = gen_samples,
-        #             columns = df.iloc[:,5:].drop('Class',1).columns)
-        #     gen_df['Class'] = 1
-        #     print(gen_df)
-
-        #     Class0 = df[df['Class'] == 0 ]
-        #     print(Class0)
-
-        #     pca = PCA(n_components = 2)
-        #     PC = pca.fit_transform(gen_df)
-        #     PCdf = pca.fit_transform(Class0.iloc[:,5:])
-
-        #     VarRatio = pca.explained_variance_ratio_
-        #     VarRatio = pd.DataFrame(np.round_(VarRatio,3))
-
-        #     CumVarRatio    = np.cumsum(pca.explained_variance_ratio_)
-        #     CumVarRatio_df = pd.DataFrame(np.round_(CumVarRatio,3))
-
-        #     Result = pd.concat([VarRatio , CumVarRatio_df], axis=1)
-        #     print(pd.DataFrame(Result))
-        #     print(pd.DataFrame(PC))
-
-        #     pca3 = PCA(n_components = 3)
-        #     PC3 = pca3.fit_transform(gen_df)
-        #     PC_df = pca3.fit_transform(Class0.iloc[:,5:])
-
-        #     VarRatio3 = pca3.explained_variance_ratio_
-        #     VarRatio3 = pd.DataFrame(np.round_(VarRatio3,3))
-
-        #     CumVarRatio3    = np.cumsum(pca3.explained_variance_ratio_)
-        #     CumVarRatio_df3 = pd.DataFrame(np.round_(CumVarRatio3,3))
-
-        #     Result3 = pd.concat([VarRatio3 , CumVarRatio_df3], axis=1)
-        #     print(pd.DataFrame(Result3))
-        #     print(pd.DataFrame(PC3))
-
-        #     augdata = pd.concat([pd.DataFrame(Class0), gen_df])
-        #     Augdata = augdata.reset_index(drop=True)
-        #     print(Augdata)
-        #     print(Augdata['Class'].value_counts(normalize=True)*100)
-        #     Augdata['TimeStamp']=pd.to_datetime(Augdata['TimeStamp'],unit='s')
-            Augdata=df
-            #host = Variable.get("MONGO_URL_SECRET")
-            host = os.environ['MONGO_URL_SECRET'] 
-            client = MongoClient(host)
-
-            db_test = client['aug_data']
-            today1=datetime.now().strftime("%Y-%m-%d")
-            collection_aug=db_test[f'aug_test_{factory}_{today1}']
-            collection_aug.create_index([("TimeStamp",ASCENDING)],unique=True)
-            data=Augdata.to_dict('records')
-        # 아래 부분은 테스트 할 때 매번 다른 oid로 데이터가 쌓이는 것을 막기 위함
-            try:
-                # isData = collection_aug.find_one()
-                # if len(isData) !=0:
-                #     print("collection is not empty")
-                #     collection_aug.delete_many({})
-                # try:
-                #     result = collection_aug.insert_many(data,ordered=False)
-                # except Exception as e:
-                #     print("mongo connection failed", e)
-                result = collection_aug.insert_many(data,ordered=False)
-            except Exception as e:
-                # print("there is no collection")
-                # try:
-                #     result = collection_aug.insert_many(data,ordered=False)
-                # except Exception as e:
-                #     print("mongo connection failed", e)
-                print("mongo connection failed", e)
-            client.close()
+        client.close()
     print("hello")
 
 
 #provide the aug data that saved in the local to the aug topic in the kafka cluster
 def oc_svm():
     
-    factorys=params.woojin_factory_name
-    print(factorys)
-    for factory in factorys:
-        host = os.environ['MONGO_URL_SECRET'] 
-        client = MongoClient(host)
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    
+    db_test = client['aug_data']
+    today1=datetime.now().strftime("%Y-%m-%d")
+    collection_aug=db_test[f'aug_test_{factory}_{today1}']
+    
+    try:
+        moldset_df = pd.DataFrame(list(collection_aug.find()))
         
-        db_test = client['aug_data']
-        today1=datetime.now().strftime("%Y-%m-%d")
-        collection_aug=db_test[f'aug_test_{factory}_{today1}']
-        
-        try:
-            moldset_df = pd.DataFrame(list(collection_aug.find()))
-            
-        except:
-            print("mongo connection failed")
-            return False
-        
-        print(moldset_df)
+    except:
+        print("mongo connection failed")
+        return False
+    
+    print(moldset_df)
 
-        moldset_9000R=moldset_df
-        important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
-        
+    moldset_9000R=moldset_df
+    important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
+    
 
-        labled = pd.DataFrame(moldset_9000R, columns = important_columns)
-        labled.columns = map(str.lower,labled.columns)
-        labled.rename(columns={'class':'label'},inplace=True)
-        print(labled.head())
-        important_columns.remove('Class')
-        target_columns = pd.DataFrame(labled, columns = map(str.lower,important_columns))
+    labled = pd.DataFrame(moldset_9000R, columns = important_columns)
+    labled.columns = map(str.lower,labled.columns)
+    labled.rename(columns={'class':'label'},inplace=True)
+    print(labled.head())
+    important_columns.remove('Class')
+    target_columns = pd.DataFrame(labled, columns = map(str.lower,important_columns))
 
-        target_columns.astype('float')
-        
+    target_columns.astype('float')
+    
+    db_model = client['model_var']
+    fs = gridfs.GridFS(db_model)
+    collection_model=db_model[f'OCSVM_{factory}']
+    
+    model_name = 'OC_SVM'
+    model_fpath = f'{model_name}.joblib'
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+    print(result)
+    cnt=len(list(result.clone()))
+    # print(result[0])
+    # print(result[cnt-1])
+    try:
+        file_id = str(result[0]['file_id'])
+        model = LoadModel(mongo_id=file_id).clf
+    except Exception as e:
+        print("exception occured in oc_svm",e)
+        model = OneClassSVM(kernel = 'rbf', gamma = 0.001, nu = 0.04).fit(target_columns)
+    joblib.dump(model, model_fpath)
+    
+    print(model.get_params())
+    
+    y_pred = model.predict(target_columns)
+    print(y_pred)
+
+
+
+    # filter outlier index
+    outlier_index = np.where(y_pred == -1)
+
+    #filter outlier values
+    outlier_values = target_columns.iloc[outlier_index]
+    print(outlier_values)
+    
+    # 이상값은 -1으로 나타낸다.
+    score = model.fit(target_columns)
+    anomaly = model.predict(target_columns)
+    target_columns['anomaly']= anomaly
+    anomaly_data = target_columns.loc[target_columns['anomaly']==-1] 
+    print(target_columns['anomaly'].value_counts())
+
+    target_columns[target_columns['anomaly']==1] = 0
+    target_columns[target_columns['anomaly']==-1] = 1
+    target_columns['Anomaly'] = target_columns['anomaly'] > 0.5
+    y_test = target_columns['Anomaly']
+    
+    print(y_test.unique())
+
+    df = pd.DataFrame(labled, columns = ['label'])
+    print(df.label)
+    
+    outliers = df['label']
+    outliers = outliers.fillna(0)
+    print(outliers.unique())
+    print(outliers)
+
+    print(y_test)
+
+    outliers = outliers.to_numpy()
+    y_test = y_test.to_numpy()
+
+    # get (mis)classification
+    cf = confusion_matrix(outliers, y_test)
+
+    # true/false positives/negatives
+    print(cf)
+    (tn, fp, fn, tp) = cf.flatten()
+
+    print(f"""{cf}
+    % of transactions labeled as fraud that were correct (precision): {tp}/({fp}+{tp}) = {tp/(fp+tp):.2%}
+    % of fraudulent transactions were caught succesfully (recall):    {tp}/({fn}+{tp}) = {tp/(fn+tp):.2%}
+    % of g-mean value : root of (specificity)*(recall) = ({tn}/({fp}+{tn})*{tp}/({fn}+{tp})) = {(tn/(fp+tn)*tp/(fn+tp))**0.5 :.2%}""")
+    
+
+    
+    #save model in the DB
+    # save the local file to mongodb
+    with open(model_fpath, 'rb') as infile:
+        file_id = fs.put(
+                infile.read(), 
+                model_name=model_name
+                )
+    # insert the model status info to ModelStatus collection 
+    params_model = {
+            'model_name': model_name,
+            'file_id': file_id,
+            'inserted_time': datetime.now()
+            }
+    result = collection_model.insert_one(params_model)
+    client.close()
+
+    print("hello OC_SVM")
+
+def lstm_autoencoder():
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    
+    db_test = client['aug_data']
+    today1=datetime.now().strftime("%Y-%m-%d")
+    collection_aug=db_test[f'aug_test_{factory}_{today1}']
+    
+    try:
+        moldset_df = pd.DataFrame(list(collection_aug.find()))
+    except:
+        print("mongo connection failed")
+        return False
+    
+    print(moldset_df)
+
+    outlier = moldset_df[moldset_df.Class == 1]
+    print(outlier.head())
+
+    important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
+    labled = pd.DataFrame(moldset_df, columns = important_columns)
+    
+    labled.columns = map(str.lower,labled.columns)
+    labled.rename(columns={'class':'label'},inplace=True)
+    print(labled.head()) 
+    
+    
+
+    # splitting by class
+    fraud = labled[labled.label == 1]
+    clean = labled[labled.label == 0]
+
+    print(f"""Shape of the datasets:
+        clean (rows, cols) = {clean.shape}
+        fraud (rows, cols) = {fraud.shape}""")
+    
+    # shuffle our training set
+    clean = clean.sample(frac=1).reset_index(drop=True)
+
+    # training set: exlusively non-fraud transactions
+    global TRAINING_SAMPLE 
+    if clean.shape[0] < TRAINING_SAMPLE:
+        TRAINING_SAMPLE=(clean.shape[0]//5)*4
+
+    X_train = clean.iloc[:TRAINING_SAMPLE].drop('label', axis=1)
+    train = clean.iloc[:TRAINING_SAMPLE].drop('label', axis=1)
+
+    # testing  set: the remaining non-fraud + all the fraud 
+    X_test = clean.iloc[TRAINING_SAMPLE:].append(fraud).sample(frac=1)
+    test = clean.iloc[TRAINING_SAMPLE:].append(fraud).sample(frac=1)
+    test.drop('label', axis = 1, inplace = True)
+    # 여기 test set이랑 train set 겹침
+
+    print(f"""Our testing set is composed as follows:
+
+            {X_test.label.value_counts()}""")
+    
+    X_test, y_test = X_test.drop('label', axis=1).values, X_test.label.values
+
+    print(f"""Shape of the datasets:
+        training (rows, cols) = {X_train.shape}
+        Testing  (rows, cols) = {X_test.shape}""")
+
+    with tf.device("/gpu:0"):
+
+        # transforming data from the time domain to the frequency domain using fast Fourier transform
+        train_fft = np.fft.fft(X_train)
+        test_fft = np.fft.fft(X_test)
+
+        scaler = MinMaxScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+        scaler_filename = "scaler_data"
+
+        # reshape inputs for LSTM [samples, timesteps, features]
+        X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[1])
+        print("Training data shape:", X_train.shape)
+        X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
+        print("Test data shape:", X_test.shape)
+    
+        #scaler and lstm autoencoder model save
         db_model = client['model_var']
         fs = gridfs.GridFS(db_model)
-        collection_model=db_model[f'OCSVM_{factory}']
+        collection_model=db_model[f'scaler_lstm_{factory}']
+    
+        model_fpath = f'{scaler_filename}.joblib'
+        joblib.dump(scaler, model_fpath)
         
-        model_name = 'OC_SVM'
+        # save the local file to mongodb
+        with open(model_fpath, 'rb') as infile:
+            file_id = fs.put(
+                    infile.read(), 
+                    model_name=scaler_filename
+                    )
+        # insert the model status info to ModelStatus collection 
+        params_model = {
+                'model_name': scaler_filename,
+                'file_id': file_id,
+                'inserted_time': datetime.now()
+                }
+        result = collection_model.insert_one(params_model)
+
+
+        # load the model
+        collection_model=db_model['LSTM_autoencoder_teng']
+        
+        model_name = 'LSTM_autoencoder'
         model_fpath = f'{model_name}.joblib'
         result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
         print(result)
         cnt=len(list(result.clone()))
+        print(cnt)
         # print(result[0])
         # print(result[cnt-1])
         try:
             file_id = str(result[0]['file_id'])
             model = LoadModel(mongo_id=file_id).clf
         except Exception as e:
-            print("exception occured in oc_svm",e)
-            model = OneClassSVM(kernel = 'rbf', gamma = 0.001, nu = 0.04).fit(target_columns)
+            print("exception occured in lstm ae",e)
+            model = autoencoder_model(X_train)
+        
         joblib.dump(model, model_fpath)
         
-        print(model.get_params())
-        
-        y_pred = model.predict(target_columns)
-        print(y_pred)
-
-
-
-        # filter outlier index
-        outlier_index = np.where(y_pred == -1)
-
-        #filter outlier values
-        outlier_values = target_columns.iloc[outlier_index]
-        print(outlier_values)
+        model.compile(optimizer='adam', loss='mae')
         
         # 이상값은 -1으로 나타낸다.
-        score = model.fit(target_columns)
-        anomaly = model.predict(target_columns)
-        target_columns['anomaly']= anomaly
-        anomaly_data = target_columns.loc[target_columns['anomaly']==-1] 
-        print(target_columns['anomaly'].value_counts())
+        print(model.summary())
 
-        target_columns[target_columns['anomaly']==1] = 0
-        target_columns[target_columns['anomaly']==-1] = 1
-        target_columns['Anomaly'] = target_columns['anomaly'] > 0.5
-        y_test = target_columns['Anomaly']
-        
+        nb_epochs = 100
+        batch_size = 10
+        history = model.fit(X_train, X_train, epochs=nb_epochs, batch_size=batch_size, validation_split=0.05).history
+
+        X_pred = model.predict(X_train)
+        X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
+        X_pred = pd.DataFrame(X_pred, columns=train.columns)
+        X_pred.index = train.index
+
+        scored = pd.DataFrame(index=train.index)
+        Xtrain = X_train.reshape(X_train.shape[0], X_train.shape[2])
+        scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtrain), axis = 1)
+
+        # plt.figure(figsize=(16,9), dpi=80)
+        # plt.title('Loss Distribution', fontsize=16)
+        # sns.distplot(scored['Loss_mae'], bins = 20, kde= True, color = 'blue');
+        # plt.xlim([0.0,.5])
+        # plt.show()
+
+
+        # calculate the loss on the test set
+        X_pred = model.predict(X_test)
+        X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
+        X_pred = pd.DataFrame(X_pred, columns=test.columns)
+        X_pred.index = test.index
+
+        scored = pd.DataFrame(index=test.index)
+        Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
+        scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
+        scored['Threshold'] = 0.1
+        scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
+        scored['label'] = labled['label']
+        print(scored.head())
+
+
+        y_test = scored['Anomaly']
         print(y_test.unique())
 
-        df = pd.DataFrame(labled, columns = ['label'])
-        print(df.label)
-        
-        outliers = df['label']
+        print(scored[scored['Anomaly']==True].label.count())
+        print(scored.label.unique())
+
+        outliers = scored['label']
         outliers = outliers.fillna(0)
         print(outliers.unique())
-        print(outliers)
-
-        print(y_test)
 
         outliers = outliers.to_numpy()
         y_test = y_test.to_numpy()
-
-        # get (mis)classification
-        cf = confusion_matrix(outliers, y_test)
-
-        # true/false positives/negatives
-        print(cf)
-        (tn, fp, fn, tp) = cf.flatten()
-
-        print(f"""{cf}
+        print(y_test)
+        cm = confusion_matrix(y_test, outliers)
+        (tn, fp, fn, tp) = cm.flatten()
+        
+        print(f"""{cm}
         % of transactions labeled as fraud that were correct (precision): {tp}/({fp}+{tp}) = {tp/(fp+tp):.2%}
         % of fraudulent transactions were caught succesfully (recall):    {tp}/({fn}+{tp}) = {tp/(fn+tp):.2%}
         % of g-mean value : root of (specificity)*(recall) = ({tn}/({fp}+{tn})*{tp}/({fn}+{tp})) = {(tn/(fp+tn)*tp/(fn+tp))**0.5 :.2%}""")
+        try:
+            print(roc_auc_score(outliers, y_test))
+        except Exception as e:
+            print("error occured in roc_auc_score")
+            print(e)
+    
+    
+        db_model = client['model_var']
+        fs = gridfs.GridFS(db_model)
+        collection_model=db_model[f'LSTM_autoencoder_{factory}']
+    
+        model_name = 'LSTM_autoencoder'
+        model_fpath = f'{model_name}.joblib'
+        joblib.dump(model, model_fpath)
         
-
-        
-        #save model in the DB
         # save the local file to mongodb
         with open(model_fpath, 'rb') as infile:
             file_id = fs.put(
@@ -482,225 +694,7 @@ def oc_svm():
                 'inserted_time': datetime.now()
                 }
         result = collection_model.insert_one(params_model)
-        client.close()
-
-    print("hello OC_SVM")
-
-def lstm_autoencoder():
-    factorys=params.woojin_factory_name
-    print(factorys)
-    for factory in factorys:
-        host = os.environ['MONGO_URL_SECRET'] 
-        client = MongoClient(host)
-        
-        db_test = client['aug_data']
-        today1=datetime.now().strftime("%Y-%m-%d")
-        collection_aug=db_test[f'aug_test_{factory}_{today1}']
-        
-        try:
-            moldset_df = pd.DataFrame(list(collection_aug.find()))
-        except:
-            print("mongo connection failed")
-            return False
-        
-        print(moldset_df)
-
-        outlier = moldset_df[moldset_df.Class == 1]
-        print(outlier.head())
-
-        important_columns = ['All_Mold_Number','Injection_Time' ,'Machine_Process_Time'  ,'PV_Cooling_Time', 'PV_Penalty_Neglect_Monitoring' ,'Product_Process_Time'  ,'Reservation_Mold_Number'  ,'Screw_Position'  ,'Weighing_Speed','Class']
-        labled = pd.DataFrame(moldset_df, columns = important_columns)
-        
-        labled.columns = map(str.lower,labled.columns)
-        labled.rename(columns={'class':'label'},inplace=True)
-        print(labled.head()) 
-        
-        
-
-        # splitting by class
-        fraud = labled[labled.label == 1]
-        clean = labled[labled.label == 0]
-
-        print(f"""Shape of the datasets:
-            clean (rows, cols) = {clean.shape}
-            fraud (rows, cols) = {fraud.shape}""")
-        
-        # shuffle our training set
-        clean = clean.sample(frac=1).reset_index(drop=True)
-
-        # training set: exlusively non-fraud transactions
-        global TRAINING_SAMPLE 
-        if clean.shape[0] < TRAINING_SAMPLE:
-            TRAINING_SAMPLE=(clean.shape[0]//5)*4
-
-        X_train = clean.iloc[:TRAINING_SAMPLE].drop('label', axis=1)
-        train = clean.iloc[:TRAINING_SAMPLE].drop('label', axis=1)
-
-        # testing  set: the remaining non-fraud + all the fraud 
-        X_test = clean.iloc[TRAINING_SAMPLE:].append(fraud).sample(frac=1)
-        test = clean.iloc[TRAINING_SAMPLE:].append(fraud).sample(frac=1)
-        test.drop('label', axis = 1, inplace = True)
-        # 여기 test set이랑 train set 겹침
-
-        print(f"""Our testing set is composed as follows:
-
-                {X_test.label.value_counts()}""")
-        
-        X_test, y_test = X_test.drop('label', axis=1).values, X_test.label.values
-
-        print(f"""Shape of the datasets:
-            training (rows, cols) = {X_train.shape}
-            Testing  (rows, cols) = {X_test.shape}""")
-
-        with tf.device("/gpu:0"):
-
-            # transforming data from the time domain to the frequency domain using fast Fourier transform
-            train_fft = np.fft.fft(X_train)
-            test_fft = np.fft.fft(X_test)
-
-            scaler = MinMaxScaler()
-            X_train = scaler.fit_transform(X_train)
-            X_test = scaler.transform(X_test)
-            scaler_filename = "scaler_data"
-
-            # reshape inputs for LSTM [samples, timesteps, features]
-            X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[1])
-            print("Training data shape:", X_train.shape)
-            X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
-            print("Test data shape:", X_test.shape)
-        
-            #scaler and lstm autoencoder model save
-            db_model = client['model_var']
-            fs = gridfs.GridFS(db_model)
-            collection_model=db_model[f'scaler_lstm_{factory}']
-        
-            model_fpath = f'{scaler_filename}.joblib'
-            joblib.dump(scaler, model_fpath)
-            
-            # save the local file to mongodb
-            with open(model_fpath, 'rb') as infile:
-                file_id = fs.put(
-                        infile.read(), 
-                        model_name=scaler_filename
-                        )
-            # insert the model status info to ModelStatus collection 
-            params_model = {
-                    'model_name': scaler_filename,
-                    'file_id': file_id,
-                    'inserted_time': datetime.now()
-                    }
-            result = collection_model.insert_one(params_model)
-
-
-            # load the model
-            collection_model=db_model['LSTM_autoencoder_teng']
-            
-            model_name = 'LSTM_autoencoder'
-            model_fpath = f'{model_name}.joblib'
-            result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
-            print(result)
-            cnt=len(list(result.clone()))
-            print(cnt)
-            # print(result[0])
-            # print(result[cnt-1])
-            try:
-                file_id = str(result[0]['file_id'])
-                model = LoadModel(mongo_id=file_id).clf
-            except Exception as e:
-                print("exception occured in lstm ae",e)
-                model = autoencoder_model(X_train)
-            
-            joblib.dump(model, model_fpath)
-            
-            model.compile(optimizer='adam', loss='mae')
-            
-            # 이상값은 -1으로 나타낸다.
-            print(model.summary())
-
-            nb_epochs = 100
-            batch_size = 10
-            history = model.fit(X_train, X_train, epochs=nb_epochs, batch_size=batch_size, validation_split=0.05).history
-
-            X_pred = model.predict(X_train)
-            X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
-            X_pred = pd.DataFrame(X_pred, columns=train.columns)
-            X_pred.index = train.index
-
-            scored = pd.DataFrame(index=train.index)
-            Xtrain = X_train.reshape(X_train.shape[0], X_train.shape[2])
-            scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtrain), axis = 1)
-
-            # plt.figure(figsize=(16,9), dpi=80)
-            # plt.title('Loss Distribution', fontsize=16)
-            # sns.distplot(scored['Loss_mae'], bins = 20, kde= True, color = 'blue');
-            # plt.xlim([0.0,.5])
-            # plt.show()
-
-
-            # calculate the loss on the test set
-            X_pred = model.predict(X_test)
-            X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
-            X_pred = pd.DataFrame(X_pred, columns=test.columns)
-            X_pred.index = test.index
-
-            scored = pd.DataFrame(index=test.index)
-            Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
-            scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
-            scored['Threshold'] = 0.1
-            scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
-            scored['label'] = labled['label']
-            print(scored.head())
-
-
-            y_test = scored['Anomaly']
-            print(y_test.unique())
-
-            print(scored[scored['Anomaly']==True].label.count())
-            print(scored.label.unique())
-
-            outliers = scored['label']
-            outliers = outliers.fillna(0)
-            print(outliers.unique())
-
-            outliers = outliers.to_numpy()
-            y_test = y_test.to_numpy()
-            print(y_test)
-            cm = confusion_matrix(y_test, outliers)
-            (tn, fp, fn, tp) = cm.flatten()
-            
-            print(f"""{cm}
-            % of transactions labeled as fraud that were correct (precision): {tp}/({fp}+{tp}) = {tp/(fp+tp):.2%}
-            % of fraudulent transactions were caught succesfully (recall):    {tp}/({fn}+{tp}) = {tp/(fn+tp):.2%}
-            % of g-mean value : root of (specificity)*(recall) = ({tn}/({fp}+{tn})*{tp}/({fn}+{tp})) = {(tn/(fp+tn)*tp/(fn+tp))**0.5 :.2%}""")
-            try:
-                print(roc_auc_score(outliers, y_test))
-            except Exception as e:
-                print("error occured in roc_auc_score")
-                print(e)
-        
-        
-            db_model = client['model_var']
-            fs = gridfs.GridFS(db_model)
-            collection_model=db_model[f'LSTM_autoencoder_{factory}']
-        
-            model_name = 'LSTM_autoencoder'
-            model_fpath = f'{model_name}.joblib'
-            joblib.dump(model, model_fpath)
-            
-            # save the local file to mongodb
-            with open(model_fpath, 'rb') as infile:
-                file_id = fs.put(
-                        infile.read(), 
-                        model_name=model_name
-                        )
-            # insert the model status info to ModelStatus collection 
-            params_model = {
-                    'model_name': model_name,
-                    'file_id': file_id,
-                    'inserted_time': datetime.now()
-                    }
-            result = collection_model.insert_one(params_model)
-        client.close()
+    client.close()
 
     print("hello auto encoder")
 

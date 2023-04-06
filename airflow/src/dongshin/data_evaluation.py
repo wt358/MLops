@@ -85,126 +85,124 @@ def data_eval():
     logging.info('########## Read & Preprocess data ##########')
     
     eval_dt = datetime.now().strftime("%Y-%m-%d")
-    factorys=params.woojin_factory_name
-    print(factorys)
-    for factory in factorys:
-        """수정사항: 데이터 Read 부분: 주생산품 데이터 with augmentation"""
-        host = os.environ['MONGO_URL_SECRET'] 
-        client = MongoClient(host)
-        db_test = client['aug_data']
-        today1=datetime.now().strftime("%Y-%m-%d")
-        collection_aug=db_test[f'aug_test_{factory}_{today1}']
+    factory=os.environ['FACT_NAME']
+    """수정사항: 데이터 Read 부분: 주생산품 데이터 with augmentation"""
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    db_test = client['aug_data']
+    today1=datetime.now().strftime("%Y-%m-%d")
+    collection_aug=db_test[f'aug_test_{factory}_{today1}']
+    try:
+        moldset_df = pd.DataFrame(list(collection_aug.find()))
+    except:
+        print("mongo connection failed")
+        return False
+    print(moldset_df)
+
+
+    df = moldset_df
+
+    df = df.drop(['_id'],axis=1)
+    y = df.pop('Class')
+    dt = pd.to_datetime(df.pop('TimeStamp'))
+
+    usecols = df.columns
+    df_ = df[usecols].copy()
+
+    scaler = StandardScaler()
+    X = scaler.fit_transform(df_)
+
+    logging.info('########## Train & Evaluate data ##########')
+    """수정사항: 예외처리 -> train_data에 라벨이 1가지인 경우(불량이 없는 경우) -> 학습 불가능"""
+    if y.value_counts().shape[0] == 2:
+        pass
+    else:
+        logging.info('########## Cannot find anomalies ##########')
+        return 1
+            
+    names = [
+        "Nearest Neighbors",
+        "RBF SVM",
+        # "Gaussian Process",
+        "Decision Tree",
+        "Random Forest",
+        "Neural Net",
+        "AdaBoost",
+        "Naive Bayes",
+        "QDA",
+    ]
+
+    classifiers = [
+        KNeighborsClassifier(),
+        SVC(),
+        # GaussianProcessClassifier(),
+        DecisionTreeClassifier(),
+        RandomForestClassifier(),
+        MLPClassifier(alpha=1, max_iter=3000),
+        AdaBoostClassifier(),
+        GaussianNB(),
+        QuadraticDiscriminantAnalysis(),
+    ]
+    params = [knn_params,
+            svc_params,
+            # gaussian_params,
+            decision_parmas,
+            random_params,
+            nn_params,
+            ada_params,
+            gnb_params,
+            qda_params]
+
+
+    best_score = {}
+    best_param = {}
+    learning_time = []
+    db_test = client['eval_data']
+    for name, clf, param in zip(names, classifiers, params):
+        start = datetime.now()
+        clf_gridsearch = GridSearchCV(clf, param, scoring='f1')
+        clf_gridsearch.fit(X, y)
+        best_score[name] = clf_gridsearch.best_score_
+        best_param[name] = clf_gridsearch.best_params_
+
+        end = datetime.now()
+        during = end - start
+        output_df = pd.DataFrame([[eval_dt, start, end, during.total_seconds(), clf_gridsearch.best_score_]+list(best_param[name].values())],
+                                columns=['date', 'start', 'end',
+                                        'time', 'BestScore'] + list(best_param[name].keys())
+        )
+        print(output_df)
+        collection=db_test[f'{name}_{factory}']
+        collection.create_index([("date",ASCENDING)],unique=True)
+        data=output_df.to_dict('records')
         try:
-            moldset_df = pd.DataFrame(list(collection_aug.find()))
-        except:
-            print("mongo connection failed")
-            return False
-        print(moldset_df)
+            collection.insert_many(data, ordered=False)
+        except Exception as e:
+            print("mongo connection failer",e)
 
+        learning_time.append([name, start, end,during.total_seconds(),clf_gridsearch.best_score_,str(clf_gridsearch.best_params_)])
+        logging.info('Gridsearch time for {}: {} sec'.format(name, during.total_seconds()))
 
-        df = moldset_df
-
-        df = df.drop(['_id'],axis=1)
-        y = df.pop('Class')
-        dt = pd.to_datetime(df.pop('TimeStamp'))
-
-        usecols = df.columns
-        df_ = df[usecols].copy()
-
-        scaler = StandardScaler()
-        X = scaler.fit_transform(df_)
-
-        logging.info('########## Train & Evaluate data ##########')
-        """수정사항: 예외처리 -> train_data에 라벨이 1가지인 경우(불량이 없는 경우) -> 학습 불가능"""
-        if y.value_counts().shape[0] == 2:
-            pass
-        else:
-            logging.info('########## Cannot find anomalies ##########')
-            return 1
-                
-        names = [
-            "Nearest Neighbors",
-            "RBF SVM",
-            # "Gaussian Process",
-            "Decision Tree",
-            "Random Forest",
-            "Neural Net",
-            "AdaBoost",
-            "Naive Bayes",
-            "QDA",
-        ]
-
-        classifiers = [
-            KNeighborsClassifier(),
-            SVC(),
-            # GaussianProcessClassifier(),
-            DecisionTreeClassifier(),
-            RandomForestClassifier(),
-            MLPClassifier(alpha=1, max_iter=3000),
-            AdaBoostClassifier(),
-            GaussianNB(),
-            QuadraticDiscriminantAnalysis(),
-        ]
-        params = [knn_params,
-                svc_params,
-                # gaussian_params,
-                decision_parmas,
-                random_params,
-                nn_params,
-                ada_params,
-                gnb_params,
-                qda_params]
-
-
-        best_score = {}
-        best_param = {}
-        learning_time = []
-        db_test = client['eval_data']
-        for name, clf, param in zip(names, classifiers, params):
-            start = datetime.now()
-            clf_gridsearch = GridSearchCV(clf, param, scoring='f1')
-            clf_gridsearch.fit(X, y)
-            best_score[name] = clf_gridsearch.best_score_
-            best_param[name] = clf_gridsearch.best_params_
-
-            end = datetime.now()
-            during = end - start
-            output_df = pd.DataFrame([[eval_dt, start, end, during.total_seconds(), clf_gridsearch.best_score_]+list(best_param[name].values())],
-                                    columns=['date', 'start', 'end',
-                                            'time', 'BestScore'] + list(best_param[name].keys())
-            )
-            print(output_df)
-            collection=db_test[f'{name}_{factory}']
-            collection.create_index([("date",ASCENDING)],unique=True)
-            data=output_df.to_dict('records')
-            try:
-                collection.insert_many(data, ordered=False)
-            except Exception as e:
-                print("mongo connection failer",e)
-
-            learning_time.append([name, start, end,during.total_seconds(),clf_gridsearch.best_score_,str(clf_gridsearch.best_params_)])
-            logging.info('Gridsearch time for {}: {} sec'.format(name, during.total_seconds()))
-
-        logging.info('########## Save models & parameters ##########')
-        os.makedirs('./data/result/{}'.format(eval_dt), exist_ok=True)
-        os.makedirs('./data/model/{}'.format(eval_dt), exist_ok=True)
-        
-        for name, clf in zip(names, classifiers):
-            clf_best = clf.set_params(**best_param[name])
-            clf_best.fit(X, y)
-            model_name=re.sub(" ","_",name)
-            os.makedirs('./model/{}'.format(model_name), exist_ok=True)
-            dump(clf, './model/{}/{}.model'.format(model_name,eval_dt))
-        # lr_time=pd.DataFrame(learning_time, 
-        #              columns=['name', 'start', 'end',
-        #                       'time', 'BestScore', 'BestParam']
-        #             )
-        # data=lr_time.to_dict('records')
-        # try:
-        #     collection.insert_many(data,ordered=False)
-        # except Exception as e:
-        #     print("mongo connection failer",e)
-        client.close()
+    logging.info('########## Save models & parameters ##########')
+    os.makedirs('./data/result/{}'.format(eval_dt), exist_ok=True)
+    os.makedirs('./data/model/{}'.format(eval_dt), exist_ok=True)
+    
+    for name, clf in zip(names, classifiers):
+        clf_best = clf.set_params(**best_param[name])
+        clf_best.fit(X, y)
+        model_name=re.sub(" ","_",name)
+        os.makedirs('./model/{}'.format(model_name), exist_ok=True)
+        dump(clf, './model/{}/{}.model'.format(model_name,eval_dt))
+    # lr_time=pd.DataFrame(learning_time, 
+    #              columns=['name', 'start', 'end',
+    #                       'time', 'BestScore', 'BestParam']
+    #             )
+    # data=lr_time.to_dict('records')
+    # try:
+    #     collection.insert_many(data,ordered=False)
+    # except Exception as e:
+    #     print("mongo connection failer",e)
+    client.close()
     print("hello evaluation")
 
 
