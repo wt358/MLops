@@ -103,6 +103,7 @@ def infer_ocsvm():
     now=now.astimezone()
     print(now)
     start_time=now-timedelta(minutes=30)
+    start_time=now-timedelta(days=1)
     print(start_time)
     df=df[df['TimeStamp']>=start_time]
     print(df.shape)

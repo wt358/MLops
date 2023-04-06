@@ -486,8 +486,9 @@ with DAG(
     #     retries=0,
     #     retry_delay=timedelta(minutes=1),
     # )
-    
+    num=0
     for i in molding_brand_name:
+        num=num+1
         i=i.lower()
         fact=f'{i}_factory_name'
         fact_list=eval(fact)
@@ -557,7 +558,7 @@ with DAG(
             )
             
             infer_svm = KubernetesPodOperator(
-                task_id="main_infer_svm_pod_operator_"+j,
+                task_id="main_infer_svm_pod_operator_"+j+'_'+num,
                 name="main-infer-ocsvm",
                 namespace='airflow-cluster',
                 image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
