@@ -457,12 +457,12 @@ def oc_svm():
                     model_name=model_name
                     )
         # insert the model status info to ModelStatus collection 
-        params = {
+        params_model = {
                 'model_name': model_name,
                 'file_id': file_id,
                 'inserted_time': datetime.now()
                 }
-        result = collection_model.insert_one(params)
+        result = collection_model.insert_one(params_model)
         client.close()
 
     print("hello OC_SVM")
@@ -563,12 +563,12 @@ def lstm_autoencoder():
                         model_name=scaler_filename
                         )
             # insert the model status info to ModelStatus collection 
-            params = {
+            params_model = {
                     'model_name': scaler_filename,
                     'file_id': file_id,
                     'inserted_time': datetime.now()
                     }
-            result = collection_model.insert_one(params)
+            result = collection_model.insert_one(params_model)
 
 
             # load the model
@@ -670,12 +670,12 @@ def lstm_autoencoder():
                         model_name=model_name
                         )
             # insert the model status info to ModelStatus collection 
-            params = {
+            params_model = {
                     'model_name': model_name,
                     'file_id': file_id,
                     'inserted_time': datetime.now()
                     }
-            result = collection_model.insert_one(params)
+            result = collection_model.insert_one(params_model)
         client.close()
 
     print("hello auto encoder")

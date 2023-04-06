@@ -146,7 +146,7 @@ def data_eval():
             GaussianNB(),
             QuadraticDiscriminantAnalysis(),
         ]
-        params = [knn_params,
+        params_model = [knn_params,
                 svc_params,
                 # gaussian_params,
                 decision_parmas,
@@ -161,7 +161,7 @@ def data_eval():
         best_param = {}
         learning_time = []
         db_test = client['eval_data']
-        for name, clf, param in zip(names, classifiers, params):
+        for name, clf, param in zip(names, classifiers, params_model):
             start = datetime.now()
             clf_gridsearch = GridSearchCV(clf, param, scoring='f1')
             clf_gridsearch.fit(X, y)
