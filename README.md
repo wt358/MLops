@@ -23,8 +23,30 @@ pseudo-gpu : 1 node ,[Standard] vCPU 2EA, Memory 8GB , [SSD]Disk 50GB
 
 - ### 3.1. pull_raw_dag
 
+사출기 이외 주변기기가 없는 경우, raw_data로 당겨온다.
+
+사출기 이외 주변기기가 있는 경우, 사출기 데이터는 raw_data로 당겨오고, 주변기기 데이터는 peripheral_data로 당겨온다.
+
+당겨온 데이터는 다시 pull_transform을 통해서 합쳐지고, 전처리 되어 etl_data에 들어간다.
 
 - ### 3.2. learning_dag
+
+이 DAG에서는 데이터 품질 개선, 모델 학습과 관련된 전반적인 task들이 실행된다.
+
+- #### 3.2.1 데이터 증강
+
+사출기 데이터에서 anomaly를 detection 하기 위해 데이터를 모델에 학습을 시켜야 한다. 그런데 사출기 데이터 특성 상 대부분의 데이터는 양품이고 불량품 데이터는 극소수에 불과하다. Anomaly Detection에서는 이 불량품의 데이터에 대해서 학습하고 이를 구별해내야 하므로, 극소량의 불량품 데이터의 양을 증강시킬 필요가 있다.
+
+이를 위해서 outlier 제거, labeling, clustering, Augmentation 과정이 아래 함수에서 수행된다.
+
+    iqr_mds_gan()
+
+
+
+- #### 3.2.2 데이터 품질 평가
+
+- #### 3.2.3 Machine Learning
+
 
 
 - ### 3.3. inference_dag
