@@ -382,6 +382,7 @@ for i in molding_brand_name:
                 is_delete_operator_pod=True,
                 get_logs=True,
                 startup_timeout_seconds=600,
+                retries=3,
                 )
 
         run_lstm = KubernetesPodOperator(
@@ -403,6 +404,7 @@ for i in molding_brand_name:
                 is_delete_operator_pod=True,
                 get_logs=True,
                 startup_timeout_seconds=600,
+                retries=3,
                 )
         run_tadgan = KubernetesPodOperator(
                 task_id="tad_pod_operator_"+j,
@@ -423,6 +425,7 @@ for i in molding_brand_name:
                 is_delete_operator_pod=True,
                 get_logs=True,
                 startup_timeout_seconds=600,
+                retries=3,
                 )
         run_svm = KubernetesPodOperator(
                 task_id="oc_svm_pod_operator_"+j,
@@ -439,6 +442,7 @@ for i in molding_brand_name:
                 is_delete_operator_pod=True,
                 get_logs=True,
                 startup_timeout_seconds=600,
+                retries=3,
                 )
         run_eval = KubernetesPodOperator(
                 task_id="eval_pod_operator_"+j,
@@ -455,6 +459,7 @@ for i in molding_brand_name:
                 is_delete_operator_pod=True,
                 get_logs=True,
                 startup_timeout_seconds=600,
+                retries=3,
                 )
 
 
@@ -464,6 +469,7 @@ for i in molding_brand_name:
             python_callable=eval('which_path_'+i),
             op_kwargs={'brand_name':i,'factory_name':j},
             dag=dag,
+            retries=3,
         )
 
         after_aug = DummyOperator(task_id="Aug_fin_"+j, dag=dag)

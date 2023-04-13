@@ -109,7 +109,7 @@ def autoencoder_model(X):
     L3 = RepeatVector(X.shape[1])(L2)
     L4 = LSTM(4, activation='relu', return_sequences=True)(L3)
     L5 = LSTM(16, activation='relu', return_sequences=True)(L4)
-    output = TimeDistributed(Dense(X.shape[2]))(L5)    
+    output = TimeDistributed(Dense(X.shape[2]))(L5)
     model = Model(inputs=inputs, outputs=output)
     return model
 

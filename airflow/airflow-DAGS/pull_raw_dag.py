@@ -464,7 +464,7 @@ with DAG(
             # depends_on_past=True,
             depends_on_past=False,
             owner="coops2",
-            retries=0,
+            retries=3,
             retry_delay=timedelta(minutes=1),
         )
 
@@ -475,7 +475,7 @@ with DAG(
             # depends_on_past=True,
             depends_on_past=False,
             owner="coops2",
-            retries=0,
+            retries=3,
             retry_delay=timedelta(minutes=1),
         )
 
@@ -485,7 +485,7 @@ with DAG(
             op_kwargs={'brand_name':i},
             depends_on_past=False,
             owner="coops2",
-            retries=0,
+            retries=3,
             retry_delay=timedelta(minutes=1),
         )
         
@@ -497,7 +497,7 @@ with DAG(
                 op_kwargs={'brand_name':i},
                 depends_on_past=False,
                 owner="coops2",
-                retries=0,
+                retries=3,
                 retry_delay=timedelta(minutes=1), 
             )
             dummy1 >> [t1,t2] >> dummy2

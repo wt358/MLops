@@ -502,7 +502,7 @@ with DAG(
             # depends_on_past=True,
             depends_on_past=False,
             owner="coops2",
-            retries=0,
+            retries=3,
             retry_delay=timedelta(minutes=1),
             trigger_rule='none_failed_min_one_success',
         )
@@ -515,6 +515,7 @@ with DAG(
                 python_callable=eval('which_path_'+i),
                 op_kwargs={'brand_name':i,'factory_name':j},
                 dag=dag,
+                retries=3,
             )
             
             # infer_tadgan = KubernetesPodOperator(
@@ -558,6 +559,7 @@ with DAG(
                 is_delete_operator_pod=True,
                 get_logs=True,
                 startup_timeout_seconds=600,
+                retries=3,
             )
             
             infer_svm = KubernetesPodOperator(
@@ -580,6 +582,7 @@ with DAG(
                 is_delete_operator_pod=True,
                 get_logs=True,
                 startup_timeout_seconds=600,
+                retries=3,
             )
             
             infer_vari= KubernetesPodOperator(
@@ -602,6 +605,7 @@ with DAG(
                 is_delete_operator_pod=True,
                 get_logs=True,
                 startup_timeout_seconds=600,
+                retries=3,
             )
             # 테스크 순서를 정합니다.
             # t1 실행 후 t2를 실행합니다.
