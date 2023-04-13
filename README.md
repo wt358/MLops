@@ -33,6 +33,12 @@ pseudo-gpu : 1 node ,[Standard] vCPU 2EA, Memory 8GB , [SSD]Disk 50GB
 
 이 DAG에서는 데이터 품질 개선, 모델 학습과 관련된 전반적인 task들이 실행된다.
 
+Task 별로 GPU가 필요한 작업들이 있다. gan, LSTM auto-encoder 들이 그 예시이며, 해당 task들은 gpu가 존재하는 node에서 실행되어야 한다.
+
+Task 별 다른 이미지와 node selection이 필요하기에 Kubernetes Pod Operator를 사용했다.
+
+이 DAG에서 사용되는 소스들은 airflow/src/ 안에 사출기 브랜드별 폴더 안에 있고, entrypoint는 copy_gpu_py.py이다.
+
 - #### 3.2.1 데이터 증강
 
 사출기 데이터에서 anomaly를 detection 하기 위해 데이터를 모델에 학습을 시켜야 한다. 그런데 사출기 데이터 특성 상 대부분의 데이터는 양품이고 불량품 데이터는 극소수에 불과하다. Anomaly Detection에서는 이 불량품의 데이터에 대해서 학습하고 이를 구별해내야 하므로, 극소량의 불량품 데이터의 양을 증강시킬 필요가 있다.
@@ -44,6 +50,24 @@ pseudo-gpu : 1 node ,[Standard] vCPU 2EA, Memory 8GB , [SSD]Disk 50GB
 
 
 - #### 3.2.2 데이터 품질 평가
+
+데이터 증강이 끝나면 증강된 데이터에 대한 데이터 품질 평가가 시작된다. 
+
+airflow/src/{사출기브랜드이름}/data_evaluation.py 안에 데이터 품질과 관련된 함수들이 저장되어 있다.
+
+    classifiers = [
+        KNeighborsClassifier(),
+        SVC(),
+        # GaussianProcessClassifier(),
+        DecisionTreeClassifier(),
+        RandomForestClassifier(),
+        MLPClassifier(alpha=1, max_iter=3000),
+        AdaBoostClassifier(),
+        GaussianNB(),
+        QuadraticDiscriminantAnalysis(),
+    ]
+
+gridsearch 모듈을 이용하여 위의 ML 모델에 테스트해보고 score, time 등을 뽑아내어, 이 때 가장 좋은 score를 낼 때의 hyperparameter를 기록한다.
 
 - #### 3.2.3 Machine Learning
 
