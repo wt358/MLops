@@ -214,7 +214,6 @@ def pull_mssql_woojin(**kwargs):
         print("query result length: " + str(len(list(sql_result_pd))))
         data=df.to_dict('records')
         host_mongo = Variable.get("WOOJIN_MONGO_URL_SECRET")
-        print(host_mongo)
         client = MongoClient(host_mongo)
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
