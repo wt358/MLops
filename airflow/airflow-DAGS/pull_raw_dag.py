@@ -363,7 +363,7 @@ def pull_transform_woojin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=4)
+        start = now - timedelta(days=7)
         print(start)
         query={
                 'TimeStamp':{
