@@ -171,8 +171,7 @@ def pull_mssql_woojin(**kwargs):
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
-        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(DAY,-7,GETDATE())")
-        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(DAY,-7,'20230413')")
+        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(DAY,-14,GETDATE())")
         # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
         #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
         # MSSQL 접속
@@ -202,7 +201,6 @@ def pull_mssql_woojin(**kwargs):
         df1=df
         print(df1.drop_duplicates())
         
-        engine.dispose()
         # for i,row in enumerate(sql_result):
         #     #print(type(row)) == <class 'sqlalchemy.engine.row.LegacyRow'>
         #     for column, value in row.items():
@@ -233,6 +231,7 @@ def pull_mssql_woojin(**kwargs):
         except Exception as e:
             print("mongo connection failed",e)
         client.close()
+        engine.dispose()
     
 def pull_transform_dongshin(**kwargs):
 
