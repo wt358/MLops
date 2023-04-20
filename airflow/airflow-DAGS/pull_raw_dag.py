@@ -171,7 +171,7 @@ def pull_mssql_woojin(**kwargs):
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
-        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(DAY,-7,GETDATE())")
+        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(DAY,-14,GETDATE())")
         # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
         #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
         # MSSQL 접속
@@ -190,11 +190,11 @@ def pull_mssql_woojin(**kwargs):
 
         FILENAME = "molding_all.csv"
 
-        sql_result = engine.execute(query)
+        # sql_result = engine.execute(query)
         sql_result_pd = pd.read_sql_query(query, engine)
         df=sql_result_pd
         df=df[df['idx']!='idx']
-        print(sql_result)
+        # print(sql_result)
         print(sql_result_pd)
         print(df)
         print(df.duplicated().sum())
@@ -210,7 +210,7 @@ def pull_mssql_woojin(**kwargs):
         #         print('{0}: {1}'.format(column, value))
         #         #outcsv.writerow(r)
 
-        print("query result length: " + str(len(list(sql_result))))
+        print("query result length: " + str(len(list(sql_result_pd))))
         data=df.to_dict('records')
         host_mongo = Variable.get("WOOJIN_MONGO_URL_SECRET")
         print(host_mongo)
