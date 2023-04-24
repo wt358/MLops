@@ -40,7 +40,7 @@ task_default_args = {
 dag = DAG(
         dag_id=dag_id,
         description='kubernetes pod operator',
-        start_date=days_ago(8),
+        start_date=days_ago(1),
         default_args=task_default_args,
         schedule_interval=timedelta(days=7),
         max_active_runs=3,
