@@ -26,7 +26,6 @@ from bson import ObjectId
 
 import influxdb_client
 import csv
-import pandas as pd
 import os
 import time
 from collections import Counter
@@ -311,6 +310,7 @@ class LoadModel(metaclass=ModelSingleton):
 #     print("hello inference")
 
 def push_onpremise(**kwargs):
+    import pandas as pd
     model_names = ['LSTM_autoencoder','OC_SVM']
     brand=kwargs['brand_name']
     factorys=eval(brand+ "_factory_name")
@@ -362,6 +362,7 @@ def push_onpremise(**kwargs):
     print("hello push on premise")
     
 def which_path_woojin(**kwargs):
+    import pandas as pd
     import sqlalchemy
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
