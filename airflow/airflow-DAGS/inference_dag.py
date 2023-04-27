@@ -19,16 +19,10 @@ import matplotlib.pyplot as plt
 
 from bson import ObjectId
 
-import gridfs
-import io
+# import tensorflow as tf
 
-from gridfs import GridFS
 
-import tensorflow as tf
-
-import joblib
-
-tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+# tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 import influxdb_client
 import csv
@@ -154,6 +148,9 @@ class ModelSingleton(type):
        return cls._mongo_id[mongo_id]
 
 class LoadModel(metaclass=ModelSingleton):
+   import joblib
+   import gridfs
+   from gridfs import GridFS
    def __init__(self, *args, **kwargs):
        print(kwargs)
        self.mongo_id = kwargs['mongo_id']
