@@ -134,7 +134,7 @@ cpu_aff={
 
 
 
-tf.random.set_seed(10)
+# tf.random.set_seed(10)
 class ModelSingleton(type):
    """
    Metaclass that creates a Singleton base type when called.
