@@ -50,7 +50,7 @@ VALIDATE_SIZE = 0.2
 
 # setting random seeds for libraries to ensure reproducibility
 rn.seed(RANDOM_SEED)
-tf.random.set_seed(RANDOM_SEED)
+# tf.random.set_seed(RANDOM_SEED)
 
 rn.seed(10)
 
