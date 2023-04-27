@@ -10,22 +10,11 @@ from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import Kubernete
 from airflow.operators.python_operator import BranchPythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.models.variable import Variable
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.decomposition import PCA
-from sklearn.cluster import DBSCAN
-from sklearn.manifold import MDS
-from sklearn.metrics import precision_score, recall_score, f1_score,accuracy_score, classification_report, plot_confusion_matrix, confusion_matrix
+from sklearn.preprocessing import  MinMaxScaler
 
-from sklearn.model_selection import KFold, GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import IsolationForest
-from sklearn.svm import OneClassSVM 
-from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score
 
 from IPython.display import Image
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 
 from bson import ObjectId
@@ -35,24 +24,9 @@ import io
 
 from gridfs import GridFS
 
-
-
-from imblearn.over_sampling import SMOTE
-from imblearn.pipeline import Pipeline
-
-from tensorflow.keras.layers import Input, Dense, Reshape, Flatten, Dropout, multiply, Concatenate, Dropout, LSTM, TimeDistributed, RepeatVector
-from tensorflow.keras.layers import BatchNormalization, Activation, Embedding, ZeroPadding2D, LeakyReLU
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.optimizers import Adam, RMSprop
-from tensorflow.keras.initializers import RandomNormal
-import tensorflow.keras.backend as K
-from tensorflow.keras import regularizers
-from tensorflow.python.client import device_lib
-from sklearn.utils import shuffle
 import tensorflow as tf
 
 import joblib
-
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -61,16 +35,8 @@ import csv
 import pandas as pd
 import os
 import time
-import numpy as np
 from collections import Counter
-from kafka import KafkaConsumer
-from kafka import KafkaProducer
 from pymongo import MongoClient, ASCENDING, DESCENDING
-
-import sqlalchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import text
 
 from json import loads
 import random as rn
@@ -82,7 +48,6 @@ dongshin_factory_name = ['teng',  ]
 gpu_tag='0.17'
 tad_tag='0.01'
 
-np.random.seed(34)
 
 # manual parameters
 RANDOM_SEED = 42
@@ -90,7 +55,6 @@ TRAINING_SAMPLE = 50000
 VALIDATE_SIZE = 0.2
 
 # setting random seeds for libraries to ensure reproducibility
-np.random.seed(RANDOM_SEED)
 rn.seed(RANDOM_SEED)
 tf.random.set_seed(RANDOM_SEED)
 
@@ -212,140 +176,142 @@ class LoadModel(metaclass=ModelSingleton):
        return joblib.load(f'{f.model_name}.joblib')
 
 # define funcs
-def model_inference():
-    #data consumer
-    now = datetime.now()
-    curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
+# def model_inference():
+#     import numpy as np
+#     np.random.seed(RANDOM_SEED)
+#     #data consumer
+#     now = datetime.now()
+#     curr_time = now.strftime("%Y-%m-%d_%H:%M:%S")
 
-    consumer = KafkaConsumer('test.coops2022_etl.etl_data',
-            group_id=f'Inference_model_{curr_time}',
-            bootstrap_servers=['kafka-clust-kafka-persis-d198b-11683092-d3d89e335b84.kr.lb.naverncp.com:9094'],
-            value_deserializer=lambda x: loads(x.decode('utf-8')),
-            auto_offset_reset='earliest',
-            consumer_timeout_ms=10000
-            )
-    #consumer.poll(timeout_ms=1000, max_records=2000)
+#     consumer = KafkaConsumer('test.coops2022_etl.etl_data',
+#             group_id=f'Inference_model_{curr_time}',
+#             bootstrap_servers=['kafka-clust-kafka-persis-d198b-11683092-d3d89e335b84.kr.lb.naverncp.com:9094'],
+#             value_deserializer=lambda x: loads(x.decode('utf-8')),
+#             auto_offset_reset='earliest',
+#             consumer_timeout_ms=10000
+#             )
+#     #consumer.poll(timeout_ms=1000, max_records=2000)
 
-    #dataframe extract
-    l=[]
+#     #dataframe extract
+#     l=[]
 
-    for message in consumer:
-        message = message.value
-        l.append(loads(message['payload'])['fullDocument'])
-    df = pd.DataFrame(l)
-    print(df)
-    if df.empty:
-        print("empty queue")
-        return
-    # dataframe transform
-    df=df[df['idx']!='idx']
-    print(df.shape)
-    print(df.columns)
-    print(df)
+#     for message in consumer:
+#         message = message.value
+#         l.append(loads(message['payload'])['fullDocument'])
+#     df = pd.DataFrame(l)
+#     print(df)
+#     if df.empty:
+#         print("empty queue")
+#         return
+#     # dataframe transform
+#     df=df[df['idx']!='idx']
+#     print(df.shape)
+#     print(df.columns)
+#     print(df)
 
-    df.drop(columns={'_id',
-        },inplace=True)
+#     df.drop(columns={'_id',
+#         },inplace=True)
     
-    print(df)
+#     print(df)
 
     
-    labled = pd.DataFrame(df, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position'])
+#     labled = pd.DataFrame(df, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position'])
 
 
-    labled.columns = map(str.lower,labled.columns)
+#     labled.columns = map(str.lower,labled.columns)
 
-    print(labled.head())
+#     print(labled.head())
 
-    X_test = labled.sample(frac=1)
-    test = X_test 
-    X_test=X_test.values
-    print(f"""Shape of the datasets:
-        Testing  (rows, cols) = {X_test.shape}""")
+#     X_test = labled.sample(frac=1)
+#     test = X_test 
+#     X_test=X_test.values
+#     print(f"""Shape of the datasets:
+#         Testing  (rows, cols) = {X_test.shape}""")
     
     
-    mongoClient = MongoClient()
-    host = Variable.get("MONGO_URL_SECRET")
-    client = MongoClient(host)
-    db_model = client['coops2022_model']
-    fs = gridfs.GridFS(db_model)
-    collection_model=db_model['mongo_scaler_lstm']
+#     mongoClient = MongoClient()
+#     host = Variable.get("MONGO_URL_SECRET")
+#     client = MongoClient(host)
+#     db_model = client['coops2022_model']
+#     fs = gridfs.GridFS(db_model)
+#     collection_model=db_model['mongo_scaler_lstm']
     
-    model_name = 'scaler_data'
-    model_fpath = f'{model_name}.joblib'
-    result = collection_model.find({"model_name": model_name}).sort('uploadDate', -1)
-    print(result)
-    if len(list(result.clone()))==0:
-        print("empty")
-        scaler = MinMaxScaler()
-    else:
-        print("not empty")
-        file_id = str(result[0]['file_id'])
-        scaler = LoadModel(mongo_id=file_id).clf
+#     model_name = 'scaler_data'
+#     model_fpath = f'{model_name}.joblib'
+#     result = collection_model.find({"model_name": model_name}).sort('uploadDate', -1)
+#     print(result)
+#     if len(list(result.clone()))==0:
+#         print("empty")
+#         scaler = MinMaxScaler()
+#     else:
+#         print("not empty")
+#         file_id = str(result[0]['file_id'])
+#         scaler = LoadModel(mongo_id=file_id).clf
     
-    # transforming data from the time domain to the frequency domain using fast Fourier transform
-    test_fft = np.fft.fft(X_test)
+#     # transforming data from the time domain to the frequency domain using fast Fourier transform
+#     test_fft = np.fft.fft(X_test)
     
-    X_test = scaler.transform(X_test)# 나중에 scaler도 pull raw 2 aug에서 모델을 저장해서 놓고 여기서는 그 모델을 불러와서 transform(X_test)만 해야함.
-    scaler_filename = "scaler_data"
-    joblib.dump(scaler, scaler_filename)
+#     X_test = scaler.transform(X_test)# 나중에 scaler도 pull raw 2 aug에서 모델을 저장해서 놓고 여기서는 그 모델을 불러와서 transform(X_test)만 해야함.
+#     scaler_filename = "scaler_data"
+#     joblib.dump(scaler, scaler_filename)
 
-    X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
-    print("Test data shape:", X_test.shape)
-    #model load    
+#     X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
+#     print("Test data shape:", X_test.shape)
+#     #model load    
     
-    model_name = 'LSTM_autoencoder'
-    collection_model=db_model[f'mongo_{model_name}']
+#     model_name = 'LSTM_autoencoder'
+#     collection_model=db_model[f'mongo_{model_name}']
     
-    model_fpath = f'{model_name}.joblib'
-    result = collection_model.find({"model_name": model_name}).sort('uploadDate', -1)
+#     model_fpath = f'{model_name}.joblib'
+#     result = collection_model.find({"model_name": model_name}).sort('uploadDate', -1)
     
-    print(result)
-    if len(list(result.clone()))==0:
-        print("empty")
-        return 1
-    else:
-        print("not empty")
-        file_id = str(result[0]['file_id'])
-        model = LoadModel(mongo_id=file_id).clf
+#     print(result)
+#     if len(list(result.clone()))==0:
+#         print("empty")
+#         return 1
+#     else:
+#         print("not empty")
+#         file_id = str(result[0]['file_id'])
+#         model = LoadModel(mongo_id=file_id).clf
 
-    joblib.dump(model, model_fpath)
+#     joblib.dump(model, model_fpath)
     
-    model.compile(optimizer='adam', loss='mae')
+#     model.compile(optimizer='adam', loss='mae')
     
-    # 이상값은 -1으로 나타낸다.
-    print(model.summary())
+#     # 이상값은 -1으로 나타낸다.
+#     print(model.summary())
 
 
-    X_pred = model.predict(X_test)
-    X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
-    X_pred = pd.DataFrame(X_pred, columns=test.columns)
-    X_pred.index = test.index
+#     X_pred = model.predict(X_test)
+#     X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
+#     X_pred = pd.DataFrame(X_pred, columns=test.columns)
+#     X_pred.index = test.index
     
-    scored = pd.DataFrame(index=test.index)
-    Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
-    scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
-    scored['Threshold'] = 0.1
-    scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
-    print(scored.head())
+#     scored = pd.DataFrame(index=test.index)
+#     Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
+#     scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
+#     scored['Threshold'] = 0.1
+#     scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
+#     print(scored.head())
 
-    y_test = scored['Anomaly']
-    print(y_test.unique())
-
-
-    print(y_test)
-
-    db_test = client['coops2022_result']
-    collection = db_test[f'result_{model_name}']
-    #data=scored.to_dict('records')
-    data=X_pred.to_dict('records')
-
-    try:
-        collection.insert_many(data,ordered=False)
-    except Exception as e:
-        print("mongo connection failer",e)
+#     y_test = scored['Anomaly']
+#     print(y_test.unique())
 
 
-    print("hello inference")
+#     print(y_test)
+
+#     db_test = client['coops2022_result']
+#     collection = db_test[f'result_{model_name}']
+#     #data=scored.to_dict('records')
+#     data=X_pred.to_dict('records')
+
+#     try:
+#         collection.insert_many(data,ordered=False)
+#     except Exception as e:
+#         print("mongo connection failer",e)
+
+
+#     print("hello inference")
 
 def push_onpremise(**kwargs):
     model_names = ['LSTM_autoencoder','OC_SVM']
@@ -399,6 +365,10 @@ def push_onpremise(**kwargs):
     print("hello push on premise")
     
 def which_path_woojin(**kwargs):
+    import sqlalchemy
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.sql import text
     '''
     return the task_id which to be executed
     '''
