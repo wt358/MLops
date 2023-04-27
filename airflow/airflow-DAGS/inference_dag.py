@@ -24,8 +24,6 @@ from bson import ObjectId
 
 # tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
-import influxdb_client
-import csv
 import os
 import time
 from collections import Counter
