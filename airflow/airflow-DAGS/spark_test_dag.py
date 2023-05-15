@@ -65,8 +65,8 @@ dag = DAG(
 #     "example_spark_kubernetes_operator_pi.yaml").read()
 # K8S_CONN_ID=${K8S_MASTER:-$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')}
 
-K8S_CONN_ID=os.system("kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'")
-print(K8S_CONN_ID)
+# K8S_CONN_ID=os.system("kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'")
+# print(K8S_CONN_ID)
 submit = SparkKubernetesOperator(
     task_id='spark_pi_submit',
     namespace="spark-operator",
