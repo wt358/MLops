@@ -26,7 +26,7 @@ https://github.com/GoogleCloudPlatform/spark-on-k8s-operator
 """
 
 from datetime import timedelta, datetime
-
+import os
 # [START import_module]
 # The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
@@ -63,16 +63,19 @@ dag = DAG(
 
 # spark = open(
 #     "example_spark_kubernetes_operator_pi.yaml").read()
+# K8S_CONN_ID=${K8S_MASTER:-$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')}
+
+K8S_CONN_ID=os.system("kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'")
 
 submit = SparkKubernetesOperator(
     task_id='spark_pi_submit',
     namespace="spark-operator",
     application_file="example_spark_kubernetes_operator_pi.yaml",
-    kubernetes_conn_id="kubernetes_in_cluster",
+    kubernetes_conn_id=f"{K8S_CONN_ID}",
     do_xcom_push=True,
     dag=dag,
     api_group="sparkoperator.hpe.com",
-    enable_impersonation_from_ldap_user=False
+    # enable_impersonation_from_ldap_user=False
 )
 
 sensor = SparkKubernetesSensor(
