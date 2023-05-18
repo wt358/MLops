@@ -76,14 +76,15 @@ submit = SparkKubernetesOperator(
     # enable_impersonation_from_ldap_user=False
 )
 
-sensor = SparkKubernetesSensor(
-    task_id='spark_pi_monitor',
-    namespace="spark-operator",
-    application_name="{{ task_instance.xcom_pull(task_ids='spark_pi_submit')['metadata']['name'] }}",
-    kubernetes_conn_id="kubernetes_default",
-    dag=dag,
-    # api_group="sparkoperator.hpe.com",
-    attach_log=True
-)
+# sensor = SparkKubernetesSensor(
+#     task_id='spark_pi_monitor',
+#     namespace="spark-operator",
+#     application_name="{{ task_instance.xcom_pull(task_ids='spark_pi_submit')['metadata']['name'] }}",
+#     kubernetes_conn_id="kubernetes_default",
+#     dag=dag,
+#     # api_group="sparkoperator.hpe.com",
+#     attach_log=True
+# )
 
-submit >> sensor
+# submit >> sensor
+submit 
