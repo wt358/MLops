@@ -65,8 +65,6 @@ dag = DAG(
 #     "example_spark_kubernetes_operator_pi.yaml").read()
 # K8S_CONN_ID=${K8S_MASTER:-$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')}
 
-# K8S_CONN_ID=os.system("kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'")
-# print(K8S_CONN_ID)
 submit = SparkKubernetesOperator(
     task_id='spark_pi_submit',
     namespace="spark-operator",
@@ -74,7 +72,7 @@ submit = SparkKubernetesOperator(
     kubernetes_conn_id="kubernetes_default",
     do_xcom_push=True,
     dag=dag,
-    api_group="sparkoperator.hpe.com",
+    # api_group="sparkoperator.hpe.com",
     # enable_impersonation_from_ldap_user=False
 )
 
@@ -82,9 +80,9 @@ sensor = SparkKubernetesSensor(
     task_id='spark_pi_monitor',
     namespace="spark-operator",
     application_name="{{ task_instance.xcom_pull(task_ids='spark_pi_submit')['metadata']['name'] }}",
-    kubernetes_conn_id="kubernetes_in_cluster",
+    kubernetes_conn_id="kubernetes_default",
     dag=dag,
-    api_group="sparkoperator.hpe.com",
+    # api_group="sparkoperator.hpe.com",
     attach_log=True
 )
 
