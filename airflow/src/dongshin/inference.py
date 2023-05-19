@@ -152,7 +152,7 @@ def infer_ocsvm():
     print(factory)
     db_test = client['etl_data']
     collection_etl=db_test[f'etl_{factory}']
-    start=now-timedelta(days=1)
+    start=now-timedelta(days=4)
     query={
             'TimeStamp':{
                 '$gt':start,
@@ -345,7 +345,7 @@ def infer_lstm():
     #         print(message)
     # df = pd.DataFrame(l)
     # consumer.close()
-    start=now-timedelta(days=1)
+    start=now-timedelta(days=4)
     query={
             'TimeStamp':{
                 '$gt':start,

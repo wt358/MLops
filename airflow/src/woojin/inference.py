@@ -81,7 +81,7 @@ def infer_ocsvm():
     print(factory)
     db_test = client['etl_data']
     collection_etl=db_test[f'etl_{factory}']
-    start=now-timedelta(days=1)
+    start=now-timedelta(days=4)
     query={
             'TimeStamp':{
                 '$gt':start,
@@ -103,7 +103,7 @@ def infer_ocsvm():
     now=now.astimezone()
     print(now)
     start_time=now-timedelta(minutes=30)
-    start_time=now-timedelta(days=1)
+    start_time=now-timedelta(days=4)
     print(start_time)
     df=df[df['TimeStamp']>=start_time]
     print(df.shape)
@@ -306,7 +306,7 @@ def infer_lstm():
     #     message = message.value
     #     l.append(loads(message['payload'])['fullDocument'])
     # df = pd.DataFrame(l)
-    start=now-timedelta(days=1)
+    start=now-timedelta(days=4)
     query={
             'TimeStamp':{
                 '$gt':start,
@@ -328,7 +328,7 @@ def infer_lstm():
     now=now.astimezone()
     print(now)
     start_time=(now-timedelta(minutes=30)).astimezone()
-    start_time=(now-timedelta(days=1)).astimezone()
+    start_time=(now-timedelta(days=4)).astimezone()
     print(start_time)
     df=df[df['TimeStamp']>=start_time]
     print(df.shape)
