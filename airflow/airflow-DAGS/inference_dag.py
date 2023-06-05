@@ -467,7 +467,6 @@ with DAG(
             op_kwargs={'brand_name':i},
             # depends_on_past=True,
             depends_on_past=False,
-            force_pull=True,
             owner="coops2",
             retries=3,
             retry_delay=timedelta(minutes=1),
