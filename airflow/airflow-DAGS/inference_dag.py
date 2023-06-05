@@ -346,10 +346,10 @@ def push_onpremise(**kwargs):
 
         # for on premise
             host = Variable.get("LOCAL_MONGO_URL_SECRET")
-            client = MongoClient(host,serverSelectionTimeoutMS=60000)
+            client = MongoClient(host)
             db_model = client['result_log']
             collection=db_model[f'{model_name}_{factory}']
-            # collection.create_index([("TimeStamp",ASCENDING)],unique=True)
+            collection.create_index([("TimeStamp",ASCENDING)],unique=True)
             data=df.to_dict('records')
 
             try:
