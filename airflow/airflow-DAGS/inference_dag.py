@@ -476,6 +476,7 @@ with DAG(
             original_fact=j
             j=j.lower()
             dummy1 = DummyOperator(task_id="path1_"+j)
+            dummy_end = DummyOperator(task_id="end"+j)
             main_or_vari = BranchPythonOperator(
                 task_id = 'branch_'+j,
                 python_callable=eval('which_path_'+i),
@@ -585,10 +586,12 @@ with DAG(
                 
                 if path == 'path_main':
                     # main_or_vari>>t>>infer_main 
-                    main_or_vari>>t>>[infer_main,infer_svm] >> t2
+                    # main_or_vari>>t>>[infer_main,infer_svm] >> t2
+                    main_or_vari>>t>>[infer_main,infer_svm] >> dummy_end
 
                 elif path == 'path_vari':
                     # main_or_vari>>t>>infer_tadgan
-                    main_or_vari>>t>>infer_vari>> t2
+                    # main_or_vari>>t>>infer_vari>> t2
+                    main_or_vari>>t>>infer_vari >> dummy_end
 
 
