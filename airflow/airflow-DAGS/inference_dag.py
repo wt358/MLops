@@ -482,6 +482,7 @@ with DAG(
             is_delete_operator_pod=True,
             get_logs=True,
             startup_timeout_seconds=600,
+            trigger_rule='none_failed_min_one_success',
         )
         # t2 = PythonOperator(
         #     task_id="push_on_premise_"+i,
@@ -608,12 +609,12 @@ with DAG(
                 
                 if path == 'path_main':
                     # main_or_vari>>t>>infer_main 
-                    main_or_vari>>t>>[infer_main,infer_svm] >> t2
+                    main_or_vari>>t>>[infer_main,infer_svm] >> t2 >> dummy_end
                     # main_or_vari>>t>>[infer_main,infer_svm] >> dummy_end
 
                 elif path == 'path_vari':
                     # main_or_vari>>t>>infer_tadgan
-                    main_or_vari>>t>>infer_vari>> t2
+                    main_or_vari>>t>>infer_vari>> t2 >> dummy_end
                     # main_or_vari>>t>>infer_vari >> dummy_end
 
 
