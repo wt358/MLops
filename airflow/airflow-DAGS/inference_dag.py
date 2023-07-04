@@ -470,7 +470,7 @@ with DAG(
             # image_pull_policy="IfNotPresent",
             image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
             cmds=["sh"],
-            arguments=["command.sh", i,"push_onpremise",f"{i}"],
+            arguments=["command.sh", i,"push_onpremise"],
             affinity=gpu_aff,
             # resources=pod_resources,
             secrets=[secret_all, secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,

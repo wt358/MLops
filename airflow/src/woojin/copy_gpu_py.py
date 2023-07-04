@@ -463,9 +463,10 @@ def oc_svm():
 
     print("hello OC_SVM")
 
-def push_onpremise(brand):
+def push_onpremise():
     import pandas as pd
     model_names = ['LSTM_autoencoder','OC_SVM']
+    brand='woojin'
     factorys=eval(brand+ "_factory_name")
     print(factorys)
     now=datetime.now()
@@ -1188,6 +1189,6 @@ if __name__ == "__main__":
         infer_ocsvm()
     elif sys.argv[1] == 'push_onpremise':
         print("entering push_onpremise")
-        push_onpremise(sys.argv[2])
+        push_onpremise()
     print("hello main")
  
