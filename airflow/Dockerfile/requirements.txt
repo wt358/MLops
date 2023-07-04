@@ -10,7 +10,6 @@ kubernetes
 scikit-learn
 imbalanced-learn
 tensorflow
-tensorflow-gpu
 ipython
 matplotlib
 seaborn

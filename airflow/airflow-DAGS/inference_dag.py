@@ -38,6 +38,7 @@ dongshin_factory_name = ['teng',  ]
 
 gpu_tag='0.18'
 tad_tag='0.01'
+vpn_tag='0.01'
 
 
 # manual parameters
@@ -465,7 +466,7 @@ with DAG(
             task_id="push_on_premise_"+i,
             name="push_on_premise",
             namespace='airflow-cluster',
-            image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
+            image=f'ctf-mlops.kr.ncr.ntruss.com/vpn:{vpn_tag}',
             # image_pull_policy="Always",
             # image_pull_policy="IfNotPresent",
             image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
