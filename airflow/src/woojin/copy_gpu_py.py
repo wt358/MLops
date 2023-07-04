@@ -98,6 +98,7 @@ rn.seed(RANDOM_SEED)
 tf.random.set_seed(RANDOM_SEED)
 
 rn.seed(10)
+oojin_factory_name = ['NewSeoGwang', ]
 
 tf.random.set_seed(10)
 
