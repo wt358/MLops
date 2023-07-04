@@ -36,7 +36,7 @@ molding_brand_name = ['WooJin', 'DongShin']
 woojin_factory_name = ['NewSeoGwang', ]
 dongshin_factory_name = ['teng',  ]
 
-gpu_tag='0.17'
+gpu_tag='0.18'
 tad_tag='0.01'
 
 
