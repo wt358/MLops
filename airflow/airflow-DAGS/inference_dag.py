@@ -608,12 +608,12 @@ with DAG(
                 
                 if path == 'path_main':
                     # main_or_vari>>t>>infer_main 
-                    # main_or_vari>>t>>[infer_main,infer_svm] >> t2
-                    main_or_vari>>t>>[infer_main,infer_svm] >> dummy_end
+                    main_or_vari>>t>>[infer_main,infer_svm] >> t2
+                    # main_or_vari>>t>>[infer_main,infer_svm] >> dummy_end
 
                 elif path == 'path_vari':
                     # main_or_vari>>t>>infer_tadgan
-                    # main_or_vari>>t>>infer_vari>> t2
-                    main_or_vari>>t>>infer_vari >> dummy_end
+                    main_or_vari>>t>>infer_vari>> t2
+                    # main_or_vari>>t>>infer_vari >> dummy_end
 
 
