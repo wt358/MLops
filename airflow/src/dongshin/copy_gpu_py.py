@@ -99,6 +99,7 @@ tf.random.set_seed(RANDOM_SEED)
 
 rn.seed(10)
 
+dongshin_factory_name = ['teng',  ]
 tf.random.set_seed(10)
 
 # define funcs
@@ -113,6 +114,55 @@ def autoencoder_model(X):
     model = Model(inputs=inputs, outputs=output)
     return model
 
+def push_onpremise():
+    import pandas as pd
+    model_names = ['LSTM_autoencoder','OC_SVM']
+    brand='dongshin'
+    factorys=eval(brand+ "_factory_name")
+    print(factorys)
+    now=datetime.now()
+    start=now-timedelta(days=50)
+    for model_name in model_names:
+        for factory in factorys:
+            host = os.environ["MONGO_URL_SECRET"]
+            client = MongoClient(host)
+            db_result = client['result_log']
+            collection = db_result[f'log_{model_name}_{factory}']
+            query={
+                'TimeStamp':{
+                    '$gt':start,
+                    '$lt':now
+                    }
+                }
+            try:
+                df = pd.DataFrame(list(collection.find(query)))
+            except Exception as e:
+                print("mongo connection failer during pull",e)
+            print(df)
+            client.close()
+            if df.shape[0]==0:
+                print("empty")
+                break
+            df=df.drop_duplicates(subset=["_id"])
+            df.drop(columns={'_id'},inplace=True)
+
+            print(df.head())
+
+        # for on premise
+            host = os.environ["LOCAL_MONGO_URL_SECRET"]
+            client = MongoClient(host)
+            db_model = client['result_log']
+            collection=db_model[f'{model_name}_{factory}']
+            collection.create_index([("TimeStamp",ASCENDING)],unique=True)
+            data=df.to_dict('records')
+
+            try:
+                collection.insert_many(data,ordered=False)
+            except Exception as e:
+                print("mongo connection failer during push",e)
+            client.close()
+    print("hello push on premise")
+ 
 
 #pull raw data in the cloud and run the aug module. Then save the aug data files in the local.
 
@@ -1157,5 +1207,8 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'infer_vari':
         print("entering inference vari product ")
         infer_ocsvm()
+    elif sys.argv[1] == 'push_onpremise':
+        print("entering push_onpremise")
+        push_onpremise()
     print("hello main")
  
