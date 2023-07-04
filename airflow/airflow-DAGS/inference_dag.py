@@ -461,17 +461,38 @@ with DAG(
         i=i.lower()
         fact=f'{i}_factory_name'
         fact_list=eval(fact)
-        t2 = PythonOperator(
+        infer_tadgan = KubernetesPodOperator(
             task_id="push_on_premise_"+i,
-            python_callable=push_onpremise,
-            op_kwargs={'brand_name':i},
-            # depends_on_past=True,
-            depends_on_past=False,
-            owner="coops2",
-            retries=3,
-            retry_delay=timedelta(minutes=1),
-            trigger_rule='none_failed_min_one_success',
+            name="push_on_premise",
+            namespace='airflow-cluster',
+            image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
+            # image_pull_policy="Always",
+            # image_pull_policy="IfNotPresent",
+            image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+            cmds=["sh"],
+            arguments=["command.sh", "push_onpremise",f"{i}"],
+            affinity=gpu_aff,
+            # resources=pod_resources,
+            secrets=[secret_all, secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
+                        secret_all6, secret_all7, secret_all8, secret_alla, secret_allb],
+            env_vars={'EXECUTION_DATE':"{{ds}}"},
+            # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
+            # configmaps=configmaps,
+            is_delete_operator_pod=True,
+            get_logs=True,
+            startup_timeout_seconds=600,
         )
+        # t2 = PythonOperator(
+        #     task_id="push_on_premise_"+i,
+        #     python_callable=push_onpremise,
+        #     op_kwargs={'brand_name':i},
+        #     # depends_on_past=True,
+        #     depends_on_past=False,
+        #     owner="coops2",
+        #     retries=3,
+        #     retry_delay=timedelta(minutes=1),
+        #     trigger_rule='none_failed_min_one_success',
+        # )
         for j in fact_list:
             original_fact=j
             j=j.lower()

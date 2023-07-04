@@ -463,6 +463,58 @@ def oc_svm():
 
     print("hello OC_SVM")
 
+def push_onpremise(brand):
+    import pandas as pd
+    model_names = ['LSTM_autoencoder','OC_SVM']
+    factorys=eval(brand+ "_factory_name")
+    print(factorys)
+    now=datetime.now()
+    start=now-timedelta(days=50)
+    for model_name in model_names:
+        for factory in factorys:
+            if brand == 'woojin':
+                host = os.environ["WOOJIN_MONGO_URL_SECRET"]
+            elif brand == 'dongshin':
+                host = os.environ["MONGO_URL_SECRET"]
+            client = MongoClient(host)
+            db_result = client['result_log']
+            collection = db_result[f'log_{model_name}_{factory}']
+            query={
+                'TimeStamp':{
+                    '$gt':start,
+                    '$lt':now
+                    }
+                }
+            try:
+                df = pd.DataFrame(list(collection.find(query)))
+            except Exception as e:
+                print("mongo connection failer during pull",e)
+            print(df)
+            client.close()
+            if df.shape[0]==0:
+                print("empty")
+                break
+            df=df.drop_duplicates(subset=["_id"])
+            df.drop(columns={'_id'},inplace=True)
+
+            print(df.head())
+
+        # for on premise
+            host = os.environ["LOCAL_MONGO_URL_SECRET"]
+            client = MongoClient(host)
+            db_model = client['result_log']
+            collection=db_model[f'{model_name}_{factory}']
+            collection.create_index([("TimeStamp",ASCENDING)],unique=True)
+            data=df.to_dict('records')
+
+            try:
+                collection.insert_many(data,ordered=False)
+            except Exception as e:
+                print("mongo connection failer during push",e)
+            client.close()
+    print("hello push on premise")
+ 
+
 def lstm_autoencoder():
     factory=os.environ['FACT_NAME']
     host = os.environ['MONGO_URL_SECRET'] 
@@ -1134,5 +1186,8 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'infer_vari':
         print("entering inference vari product ")
         infer_ocsvm()
+    elif sys.argv[1] == 'push_onpremise':
+        print("entering push_onpremise")
+        push_onpremise(sys.argv[2])
     print("hello main")
  
