@@ -474,10 +474,7 @@ def push_onpremise():
     start=now-timedelta(days=50)
     for model_name in model_names:
         for factory in factorys:
-            if brand == 'woojin':
-                host = os.environ["WOOJIN_MONGO_URL_SECRET"]
-            elif brand == 'dongshin':
-                host = os.environ["MONGO_URL_SECRET"]
+            host = os.environ["MONGO_URL_SECRET"]
             client = MongoClient(host)
             db_result = client['result_log']
             collection = db_result[f'log_{model_name}_{factory}']
