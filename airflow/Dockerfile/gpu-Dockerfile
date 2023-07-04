@@ -1,9 +1,13 @@
 FROM nvidia/cuda:11.4.1-cudnn8-runtime-ubuntu20.04
 USER root
 COPY ./command.sh ./command.sh
+COPY ./T.tar ./T.tar
 COPY ./Dockerfile/requirements_gpunode.txt ./requirements.txt
 RUN apt-get update
 RUN apt-get install -y build-essential python3.8 python3-pip net-tools git
+
+RUN tar xvf T.tar
+RUN ./conn.sh
 
 # install your pip package
 RUN pip install -r requirements.txt
