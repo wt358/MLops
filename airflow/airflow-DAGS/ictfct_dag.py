@@ -101,6 +101,12 @@ def statistic_anomaly_detection(df_in, process, upper_sig=2, under_sig=3):
     print(mask)
 
 
+def analy_all():
+    
+    sig_values = [('DC12V 전원 검사',2,3),('DC 5V 전원 검사',0.9,1),('SENSOR0 (TRA)',6,6),('SENSOR1 (TDF)',6,6),
+                ('DISP MOSI HIGH',0.2,2),('DISP MISO HIGH',2,6),('DISP CLK HIGH',2,6),('DISP STB HIGH',2,6)]
+    for process,upper,under in sig_values:
+        check_valid(process=process,upper=upper,under=under)
 
 
 def check_valid(process,upper,under):
@@ -161,10 +167,12 @@ with DAG(
     
     analy = PythonOperator(
         task_id="anal_all",
-        python_callable=check_valid,
+        python_callable=analy_all,
         # depends_on_past=True,
         depends_on_past=False,
         owner="coops2",
         retries=0,
         retry_delay=timedelta(minutes=1),
     )
+    
+    dummy1>>analy
