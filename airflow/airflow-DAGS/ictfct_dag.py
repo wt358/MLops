@@ -91,15 +91,15 @@ def statistic_anomaly_detection(df_in, process, upper_sig=2, under_sig=3):
     anomal_under = test_df_c[test_df_c[process]<= lsl].index
     test_df_c['anomal_detection'] = 0
     test_df_c.loc[anomal_upper, 'anomal_detection'] = 2
-    test_df_c.loc[anomal_under, 'anomal_detection'] =1
+    test_df_c.loc[anomal_under, 'anomal_detection'] = 1
     test_df_c.reset_index(drop=True, inplace=True)
     print(test_df_c)
 
     host = Variable.get("UCT_MONGO_URL_SECRET")
     client=MongoClient(host)
     db=client['raw_db']
-    name=test_df_c.name
-    collection=db[f'stats_{name}']
+    
+    collection=db[f'results_{process}']
     
     data=test_df_c.to_dict('records')
     try:
