@@ -97,7 +97,7 @@ def statistic_anomaly_detection(df_in, process, upper_sig=2, under_sig=3):
 
     host = Variable.get("UCT_MONGO_URL_SECRET")
     client=MongoClient(host)
-    db=client['raw_db']
+    db=client['result_log']
     
     collection=db[f'results_{process}']
     
