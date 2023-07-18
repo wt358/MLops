@@ -14,7 +14,7 @@ from scipy.stats import kstest, normaltest, shapiro, anderson
 import numpy as np
 import pandas as pd
 import time
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
 import matplotlib.pyplot as plt
 import matplotlib
 
@@ -100,6 +100,9 @@ def statistic_anomaly_detection(df_in, process, upper_sig=2, under_sig=3):
     db=client['result_log']
     
     collection=db[f'results_{process}']
+    collection.create_index([("date",ASCENDING)],
+                            [("qty",ASCENDING)],
+                            unique=True)
     
     data=test_df_c.to_dict('records')
     try:
