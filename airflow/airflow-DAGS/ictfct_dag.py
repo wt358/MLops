@@ -67,6 +67,7 @@ def Significance_Test(df_in):
     print(test_res1)
     
     
+    
 def statistic_anomaly_detection(df_in, process, upper_sig=2, under_sig=3):
     mean = df_in[process].mean()
     std = df_in[process].std()
@@ -94,7 +95,18 @@ def statistic_anomaly_detection(df_in, process, upper_sig=2, under_sig=3):
     test_df_c.reset_index(drop=True, inplace=True)
     print(test_df_c)
 
-
+    host = Variable.get("UCT_MONGO_URL_SECRET")
+    client=MongoClient(host)
+    db=client['raw_db']
+    name=test_df_c.name
+    collection=db[f'stats_{name}']
+    
+    data=test_df_c.to_dict('records')
+    try:
+        collection.insert_many(data,ordered=False)
+    except Exception as e:
+        print("error during push to the stats db",e)
+    
 
     print()
     print()
@@ -162,7 +174,7 @@ def anal_gan():
 with DAG(
     dag_id='uct_pipeline',
     default_args=args,
-    schedule_interval=None,
+    schedule_interval=timedelta(days=1),
     start_date=days_ago(2),
     tags=['example'],
 ) as dag:
