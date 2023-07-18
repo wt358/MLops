@@ -101,8 +101,9 @@ def statistic_anomaly_detection(df_in, process, upper_sig=2, under_sig=3):
     
     collection=db[f'results_{process}']
     collection.create_index([("date",ASCENDING),
-                            ("qty",ASCENDING)],
-                            unique=True)
+                            ("qty",ASCENDING),
+                            ]
+                            ,unique=True)
     
     data=test_df_c.to_dict('records')
     try:
