@@ -13,6 +13,7 @@ from scipy.stats import kstest, normaltest, shapiro, anderson
 
 import numpy as np
 import pandas as pd
+import time
 from pymongo import MongoClient
 import matplotlib.pyplot as plt
 import matplotlib
@@ -155,6 +156,9 @@ def check_valid(process,upper,under):
     statistic_anomaly_detection(df_in=df_new, process=process, upper_sig=upper, under_sig=under)
 
 
+def anal_gan():
+    time.sleep(234)
+
 with DAG(
     dag_id='uct_pipeline',
     default_args=args,
@@ -164,6 +168,8 @@ with DAG(
 ) as dag:
 
     dummy1 = DummyOperator(task_id="start")
+    dummy2 = DummyOperator(task_id="augmentation_finised")
+    dummy3 = DummyOperator(task_id="analysis_finished")
     
     analy = PythonOperator(
         task_id="anal_all",
@@ -174,5 +180,13 @@ with DAG(
         retries=0,
         retry_delay=timedelta(minutes=1),
     )
-    
-    dummy1>>analy
+    gan = PythonOperator(
+        task_id="augmentation",
+        python_callable=anal_gan,
+        # depends_on_past=True,
+        depends_on_past=False,
+        owner="coops2",
+        retries=0,
+        retry_delay=timedelta(minutes=1),
+    )
+    dummy1>>gan>>dummy2>>analy>>dummy3
