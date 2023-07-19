@@ -93,6 +93,7 @@ def statistic_anomaly_detection(df_in, process, upper_sig=2, under_sig=3):
     test_df_c.loc[anomal_upper, 'anomal_detection'] = 2
     test_df_c.loc[anomal_under, 'anomal_detection'] = 1
     test_df_c.reset_index(drop=True, inplace=True)
+    test_df_c.rename(columns = {f'{process}':'item'},inplace=True)
     print(test_df_c)
 
     host = Variable.get("UCT_MONGO_URL_SECRET")
