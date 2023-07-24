@@ -1313,7 +1313,7 @@ def kd_student():
 
     db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
-    collection_model=db_model[f'teacher_{factory}']
+    collection_model=db_model[f'tteacher_{factory}']
     
     model_name = 'tteacher'
     model_fpath = f'{model_name}.joblib'
