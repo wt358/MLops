@@ -29,7 +29,7 @@ def preprocess(data):
     data_time = pd.DataFrame(data['TimeStamp'])
     
     # 필요없는 컬럼 삭제
-    X_drop = data.drop(['NGmark','Hopper_Temperature','Mold_Temperature_1','Mold_Temperature_2',
+    X_drop = data.drop(['_id','NGmark','Hopper_Temperature','Mold_Temperature_1','Mold_Temperature_2',
                                       'Mold_Temperature_3','Mold_Temperature_4','Mold_Temperature_5','Mold_Temperature_6',
                                       'Mold_Temperature_7','Mold_Temperature_8','Mold_Temperature_9','Mold_Temperature_10',
                                       'Mold_Temperature_11','Mold_Temperature_12','Clamp_open_time','Cavity',
