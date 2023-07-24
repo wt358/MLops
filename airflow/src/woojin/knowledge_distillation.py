@@ -22,7 +22,7 @@ import warnings
 warnings.filterwarnings(action='ignore')
 
 HYP = {
-    'EPOCHS': 5,
+    'EPOCHS': 2,
     'LEARNING_RATE':1e-2,
     'SEED':42
 }
