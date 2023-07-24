@@ -20,7 +20,7 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 import pymongo
 import pandas as pd
 
-gpu_tag='0.21'
+gpu_tag='0.22'
 tad_tag='0.01'
 
 dag_id = 'learning-dag'
