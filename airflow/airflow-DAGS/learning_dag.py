@@ -22,7 +22,7 @@ import pandas as pd
 
 gpu_tag='0.22'
 tad_tag='0.01'
-vpn_tag='0.02'
+vpn_tag='0.03'
 
 dag_id = 'learning-dag'
 
@@ -459,7 +459,7 @@ for i in molding_brand_name:
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
                 cmds=["sh" ],
                 arguments=["command.sh",i, "kd_download"],
-                affinity=gpu_aff,
+                affinity=cpu_aff,
                 #resources=pod_resources,
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
