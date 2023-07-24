@@ -1243,7 +1243,6 @@ def kd_teacher():
 
     tteacher_model = train(teacher_model, optimizer, train_loader, val_loader, scheduler)
 
-    SaveModel(tteacher_model,f'tteacher_{factory}','tteacher',now)
     SaveModel(teacher_model,f'teacher_{factory}','teacher',now)
 
     
@@ -1313,9 +1312,9 @@ def kd_student():
 
     db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
-    collection_model=db_model[f'tteacher_{factory}']
+    collection_model=db_model[f'teacher_{factory}']
     
-    model_name = 'tteacher'
+    model_name = 'teacher'
     model_fpath = f'{model_name}.joblib'
     result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
     print(result)
@@ -1327,6 +1326,7 @@ def kd_student():
         teacher_model= LoadModel(mongo_id=file_id).clf
     except Exception as e:
         print("exception occured in teacher",e)
+        teacher_model = DenoisingAutoencoder(input_dim)
     joblib.dump(teacher_model, model_fpath)
     
     student_model = DenoisingAutoencoder(input_dim)
