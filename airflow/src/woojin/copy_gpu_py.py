@@ -1209,15 +1209,15 @@ def kd_teacher():
     X_train, X_train_time = preprocess(X_train_pre)
     X_test, X_test_time = preprocess(X_test_pre)
 
-    X_train_tensor = torch.tensor(X_train.values).to(device)
-    X_test_tensor = torch.tensor(X_test.values).to(device)
+    X_train_tensor = torch.tensor(X_train.values)
+    X_test_tensor = torch.tensor(X_test.values)
 
     train_loader = DataLoader(X_train_tensor,shuffle=False)
     val_loader = DataLoader(X_test_tensor, shuffle=False)
     
     input_dim = X_train.shape[1]
 
-    teacher_model = DenoisingAutoencoder(input_dim).to(device)
+    teacher_model = DenoisingAutoencoder(input_dim)
     teacher_model.eval()
 
     optimizer = torch.optim.Adam(teacher_model.parameters(), lr=HYP['LEARNING_RATE'])
