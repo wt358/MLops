@@ -24,6 +24,7 @@ from cTadGAN import *
 from loadmodel import *
 from data_evaluation import *
 from inference import *
+from knowledge_distillation import *
 import params
 
 
@@ -1152,11 +1153,84 @@ def teng():
             pd.DataFrame(train_loss, 
                          columns=['epoch','epochs','Dx_loss','Dz_loss','G_loss']
                         ).to_csv('./log/{}/train_loss_{}.csv'.format(train_dt, train_column))
+    print("hello teng")
 
+
+def kd_teacher():
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    import torch.optim as optim
+    from torch.utils.data import DataLoader, Dataset
+    from torchsummary import summary
 
 
     
-    print("hello teng")
+    print(torch.cuda.is_available())
+    device = torch.device('cuda')
+    print(torch.cuda.device_count())
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    print(device)
+    
+    HYP = {
+        'EPOCHS': 30,
+        'LEARNING_RATE':1e-2,
+        'SEED':42
+    }
+    
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    print(factory)
+    db_test = client['raw_data']
+    collection_etl=db_test[f'{factory}_mold_data']
+    
+    now = datetime.now()
+    start=now-timedelta(days=7)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                '$lt':now
+                }
+            }
+    try:
+        mold = pd.DataFrame(list(collection_etl.find(query)))
+    except Exception as e:
+        print("mongo connection failed", e)
+
+    
+    info_9000a = mold[(mold['Additional_Info_1']=='9000a 09520')]
+    info_9000a = info_9000a.reset_index(drop=True)
+    print(info_9000a)
+        # 8:2의 비율로 train, test set 나누기
+    X_train_pre, X_test_pre = train_test_split(info_9000a, test_size=0.2, random_state= HYP["SEED"])
+    
+    X_train, X_train_time = preprocess(X_train_pre)
+    X_test, X_test_time = preprocess(X_test_pre)
+
+    X_train_tensor = torch.tensor(X_train.values).to(device)
+    X_test_tensor = torch.tensor(X_test.values).to(device)
+
+    train_loader = DataLoader(X_train_tensor,shuffle=False)
+    val_loader = DataLoader(X_test_tensor, shuffle=False)
+    
+    input_dim = X_train.shape[1]
+
+    teacher_model = DenoisingAutoencoder(input_dim).to(device)
+    teacher_model.eval()
+
+    optimizer = torch.optim.Adam(teacher_model.parameters(), lr=HYP['LEARNING_RATE'])
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=1, threshold_mode='abs',min_lr=1e-8, verbose=True)
+
+    tteacher_model = train(teacher_model, optimizer, train_loader, val_loader, scheduler)
+
+    SaveModel(tteacher_model,f'teacher_{factory}','teacher',now)
+
+    
+    
+    print("hello knowledge_distillation")
+
 
 if __name__ == "__main__":
     print("entering main")
@@ -1188,5 +1262,8 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'push_onpremise':
         print("entering push_onpremise")
         push_onpremise()
+    elif sys.argv[1] == 'kd_teacher':
+        print("entering teacher")
+        kd_teacher()
     print("hello main")
  
