@@ -21,7 +21,11 @@ import time
 import warnings
 warnings.filterwarnings(action='ignore')
 
-
+HYP = {
+    'EPOCHS': 30,
+    'LEARNING_RATE':1e-2,
+    'SEED':42
+}
 
 def preprocess(data):
     
