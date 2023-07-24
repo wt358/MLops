@@ -22,7 +22,7 @@ import pandas as pd
 
 gpu_tag='0.22'
 tad_tag='0.01'
-vpn_tag='0.03'
+vpn_tag='0.04'
 
 dag_id = 'learning-dag'
 
