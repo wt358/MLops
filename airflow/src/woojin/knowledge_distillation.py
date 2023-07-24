@@ -168,6 +168,7 @@ def distill_loss(output, target, teacher_output, loss_fn=distillation, opt=None)
         opt.zero_grad()
         loss_b.backward()
         opt.step()
+    return loss_b.item()
 
 def validation_student(s_model, t_model, val_loader, criterion):
     s_model.eval()
@@ -209,7 +210,7 @@ def student_train(s_model, t_model, optimizer, train_loader, val_loader, schedul
                 teacher_output = t_model(X)
                 
             loss_b = distill_loss(output, X, teacher_output, loss_fn=distillation, opt=optimizer)
-
+            # print(loss_b)
             train_loss.append(loss_b)
 
         val_loss = validation_student(s_model, t_model, val_loader, distill_loss)
