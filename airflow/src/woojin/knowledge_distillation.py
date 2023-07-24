@@ -157,7 +157,7 @@ def distillation(student_logits, labels, teacher_logits, alpha):
 
 
 
-def distill_loss(output, target, teacher_output, loss_fn=distillation, opt=optimizer):
+def distill_loss(output, target, teacher_output, loss_fn=distillation, opt):
     loss_b = loss_fn(output, target, teacher_output, alpha=0.1)
 
     if opt is not None:
