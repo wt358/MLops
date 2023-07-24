@@ -22,6 +22,7 @@ import pandas as pd
 
 gpu_tag='0.22'
 tad_tag='0.01'
+vpn_tag='0.02'
 
 dag_id = 'learning-dag'
 
@@ -448,6 +449,27 @@ for i in molding_brand_name:
                 startup_timeout_seconds=600,
                 retries=0,
                 )
+        download_student= KubernetesPodOperator(
+                task_id="download_pod_operator_"+j,
+                name="download-model-learning",
+                namespace='airflow-cluster',
+                image=f'ctf-mlops.kr.ncr.ntruss.com/vpn:{vpn_tag}',
+                #image_pull_policy="Always",
+                #image_pull_policy="IfNotPresent",
+                image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+                cmds=["sh" ],
+                arguments=["command.sh",i, "kd_download"],
+                affinity=gpu_aff,
+                #resources=pod_resources,
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
+                #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
+                #configmaps=configmaps,
+                is_delete_operator_pod=True,
+                get_logs=True,
+                startup_timeout_seconds=600,
+                retries=0,
+                )
         run_tadgan = KubernetesPodOperator(
                 task_id="tad_pod_operator_"+j,
                 name="tad-gan",
@@ -529,7 +551,7 @@ for i in molding_brand_name:
                 main_or_vari >> t >> run_iqr >> after_aug 
                 after_aug >> [run_svm, run_lstm] >> after_ml
                 after_aug >> run_eval
-                after_aug >> run_teacher >> run_student
+                after_aug >> run_teacher >> run_student >> download_student
             elif path == 'path_vari':
                 # main_or_vari >> t >> run_tadgan
                 main_or_vari >> t

@@ -1339,7 +1339,36 @@ def kd_student():
     
     SaveModel(student_model,f'student_{factory}','student',now)
 
+def kd_download():
+    
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    print(factory)
+    db_model = client['model_var']
+    fs = gridfs.GridFS(db_model)
+    collection_model=db_model[f'student_{factory}']
+    
+    model_name = 'student'
+    model_fpath = f'{model_name}.joblib'
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+    print(result)
+    cnt=len(list(result.clone()))
+    # print(result[0])
+    # print(result[cnt-1])
+    try:
+        file_id = str(result[0]['file_id'])
+        student_model= LoadModel(mongo_id=file_id).clf
+    except Exception as e:
+        print("exception occured in student",e)
+    joblib.dump(student_model, model_fpath)
+    now = datetime.now()
+    SaveModel(student_model,f'student_{factory}','student',now,local=True)
+    
+    
+    
 
+    print("hello kd download")
  
 
 if __name__ == "__main__":
@@ -1378,5 +1407,8 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'kd_student':
         print("entering student")
         kd_student()
+    elif sys.argv[1] == 'model_down':
+        print("downloading student model")
+        kd_download()
     print("hello main")
  

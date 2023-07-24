@@ -42,9 +42,12 @@ class LoadModel(metaclass=ModelSingleton):
        return joblib.load(f'{f.model_name}.joblib')
    
    
-def SaveModel(model,collection_name,model_name,train_dt,loss=None):
+def SaveModel(model,collection_name,model_name,train_dt,loss=None,local=False):
     print('saving model...')
+    print(local)
     host = os.environ['MONGO_URL_SECRET']
+    if local is True:
+        host = os.environ['LOCAL_MONGO_URL_SECRET']
     client=MongoClient(host)
     db_model = client['model_var']
     fs = gridfs.GridFS(db_model)
