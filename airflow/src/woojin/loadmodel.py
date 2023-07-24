@@ -42,7 +42,7 @@ class LoadModel(metaclass=ModelSingleton):
        return joblib.load(f'{f.model_name}.joblib')
    
    
-def SaveModel(model,collection_name,model_name,train_dt):
+def SaveModel(model,collection_name,model_name,train_dt,loss=None):
     print('saving model...')
     host = os.environ['MONGO_URL_SECRET']
     client=MongoClient(host)
@@ -60,11 +60,19 @@ def SaveModel(model,collection_name,model_name,train_dt):
             model_name=model_name
         )
         # insert the model status info to ModelStatus collection
+            
         params = {
             'model_name': model_name,
             'file_id': file_id,
             'inserted_time': train_dt 
         }
+        # if loss is not None:
+        #     params = {
+        #     'model_name': model_name,
+        #     'file_id': file_id,
+        #     'inserted_time': train_dt,
+        #     'loss' : loss
+        #     }
         result = collection_model.insert_one(params)
     client.close()
     return result

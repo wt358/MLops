@@ -1217,7 +1217,25 @@ def kd_teacher():
     
     input_dim = X_train.shape[1]
 
-    teacher_model = DenoisingAutoencoder(input_dim)
+    db_model = client['model_var']
+    fs = gridfs.GridFS(db_model)
+    collection_model=db_model[f'teacher_{factory}']
+    
+    model_name = 'teacher'
+    model_fpath = f'{model_name}.joblib'
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+    print(result)
+    cnt=len(list(result.clone()))
+    # print(result[0])
+    # print(result[cnt-1])
+    try:
+        file_id = str(result[0]['file_id'])
+        teacher_model= LoadModel(mongo_id=file_id).clf
+    except Exception as e:
+        print("exception occured in teacher",e)
+        teacher_model = DenoisingAutoencoder(input_dim)
+    joblib.dump(teacher_model, model_fpath)
+  
     teacher_model.eval()
 
     optimizer = torch.optim.Adam(teacher_model.parameters(), lr=HYP['LEARNING_RATE'])
@@ -1225,7 +1243,8 @@ def kd_teacher():
 
     tteacher_model = train(teacher_model, optimizer, train_loader, val_loader, scheduler)
 
-    SaveModel(tteacher_model,f'teacher_{factory}','teacher',now)
+    SaveModel(tteacher_model,f'tteacher_{factory}','tteacher',now)
+    SaveModel(teacher_model,f'teacher_{factory}','teacher',now)
 
     
     
