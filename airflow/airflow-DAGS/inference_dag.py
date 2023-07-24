@@ -38,7 +38,7 @@ dongshin_factory_name = ['teng',  ]
 
 gpu_tag='0.19'
 tad_tag='0.01'
-vpn_tag='0.02'
+vpn_tag='0.03'
 
 
 # manual parameters
