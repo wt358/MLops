@@ -427,7 +427,7 @@ for i in molding_brand_name:
                 startup_timeout_seconds=600,
                 retries=0,
                 )
-        run_teacher= KubernetesPodOperator(
+        run_student= KubernetesPodOperator(
                 task_id="student_pod_operator_"+j,
                 name="student-model-learning",
                 namespace='airflow-cluster',
@@ -529,7 +529,7 @@ for i in molding_brand_name:
                 main_or_vari >> t >> run_iqr >> after_aug 
                 after_aug >> [run_svm, run_lstm] >> after_ml
                 after_aug >> run_eval
-                after_aug >> run_teacher
+                after_aug >> run_teacher >> run_student
             elif path == 'path_vari':
                 # main_or_vari >> t >> run_tadgan
                 main_or_vari >> t
