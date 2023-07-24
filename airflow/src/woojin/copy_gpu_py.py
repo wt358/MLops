@@ -1249,7 +1249,99 @@ def kd_teacher():
     
     
     print("hello knowledge_distillation")
+    
+def kd_student():
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    import torch.optim as optim
+    from torch.utils.data import DataLoader, Dataset
+    from torchsummary import summary
 
+
+    
+    print(torch.cuda.is_available())
+    device = torch.device('cuda')
+    print(torch.cuda.device_count())
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    print(device)
+    
+    HYP = {
+        'EPOCHS': 2,
+        'LEARNING_RATE':1e-2,
+        'SEED':42
+    }
+    
+    factory=os.environ['FACT_NAME']
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    print(factory)
+    db_test = client['raw_data']
+    collection_etl=db_test[f'{factory}_mold_data']
+    
+    now = datetime.now()
+    start=now-timedelta(days=7)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                '$lt':now
+                }
+            }
+    try:
+        mold = pd.DataFrame(list(collection_etl.find(query)))
+    except Exception as e:
+        print("mongo connection failed", e)
+
+    
+    info_9000a = mold[(mold['Additional_Info_1']=='9000a 09520')]
+    info_9000a = info_9000a.reset_index(drop=True)
+    print(info_9000a)
+        # 8:2의 비율로 train, test set 나누기
+    X_train_pre, X_test_pre = train_test_split(info_9000a, test_size=0.2, random_state= HYP["SEED"])
+    
+    X_train, X_train_time = preprocess(X_train_pre)
+    X_test, X_test_time = preprocess(X_test_pre)
+
+    X_train_tensor = torch.tensor(X_train.values)
+    X_test_tensor = torch.tensor(X_test.values)
+
+    train_loader = DataLoader(X_train_tensor,shuffle=False)
+    val_loader = DataLoader(X_test_tensor, shuffle=False)
+    
+    input_dim = X_train.shape[1]
+
+    db_model = client['model_var']
+    fs = gridfs.GridFS(db_model)
+    collection_model=db_model[f'teacher_{factory}']
+    
+    model_name = 'teacher'
+    model_fpath = f'{model_name}.joblib'
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+    print(result)
+    cnt=len(list(result.clone()))
+    # print(result[0])
+    # print(result[cnt-1])
+    try:
+        file_id = str(result[0]['file_id'])
+        teacher_model= LoadModel(mongo_id=file_id).clf
+    except Exception as e:
+        print("exception occured in teacher",e)
+        teacher_model = DenoisingAutoencoder(input_dim)
+    joblib.dump(teacher_model, model_fpath)
+    
+    student_model = DenoisingAutoencoder(input_dim)
+    student_model.eval()
+
+    optimizer = torch.optim.Adam(student_model.parameters(), lr= HYP['LEARNING_RATE'])
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=1, threshold_mode='abs',min_lr=1e-8, verbose=True)
+
+    sstudent_model = student_train(student_model, teacher_model, optimizer, train_loader, val_loader, scheduler)
+    
+    SaveModel(student_model,f'student_{factory}','student',now)
+
+
+ 
 
 if __name__ == "__main__":
     print("entering main")
@@ -1284,5 +1376,8 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'kd_teacher':
         print("entering teacher")
         kd_teacher()
+    elif sys.argv[1] == 'kd_student':
+        print("entering student")
+        kd_student()
     print("hello main")
  
