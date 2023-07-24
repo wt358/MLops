@@ -1174,7 +1174,7 @@ def kd_teacher():
     print(device)
     
     HYP = {
-        'EPOCHS': 30,
+        'EPOCHS': 2,
         'LEARNING_RATE':1e-2,
         'SEED':42
     }
