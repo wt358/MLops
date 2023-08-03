@@ -1175,7 +1175,7 @@ def kd_teacher():
     
     HYP = {
         'EPOCHS': int(os.environ['epoch']),
-        'LEARNING_RATE':int(os.environ['learningRate']),
+        'LEARNING_RATE':float(os.environ['learningRate']),
         'SEED':42
     }
     
