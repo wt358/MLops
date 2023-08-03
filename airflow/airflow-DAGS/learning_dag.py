@@ -459,7 +459,7 @@ for i in molding_brand_name:
                 #image_pull_policy="IfNotPresent",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
                 cmds=["sh" ],
-                arguments=["command.sh",i, "kd_download"],
+                arguments=["command.sh",i, "model_down"],
                 affinity=cpu_aff,
                 #resources=pod_resources,
                 secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb, secret_hyperpara ],
