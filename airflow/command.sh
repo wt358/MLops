@@ -10,6 +10,6 @@ cp -r ./MLops/airflow/src/* ./py-test/
 
 python3 ./py-test/${BRAND}/copy_gpu_py.py ${FUNC}
 
-# if [ -e "./disconn.sh" ]; then
-#     ./disconn.sh
-# fi
+if [ -e "./disconn.sh" ]; then
+    ./disconn.sh
+fi
