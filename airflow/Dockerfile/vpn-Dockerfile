@@ -2,7 +2,7 @@ FROM ctf-mlops.kr.ncr.ntruss.com/airflow-py:0.8
 USER root
 COPY ./command.sh ./command.sh
 COPY ./T.tar ./T.tar
-COPY ./Dockerfile/requirements_gpu.txt ./requirements.txt
+COPY ./Dockerfile/requirements_gpunode.txt ./requirements.txt
 RUN apt-get update
 RUN apt-get install -y build-essential python3-pip net-tools git
 
