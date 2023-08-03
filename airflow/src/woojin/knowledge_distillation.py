@@ -22,8 +22,8 @@ import warnings
 warnings.filterwarnings(action='ignore')
 
 HYP = {
-    'EPOCHS': os.environ['epoch'],
-    'LEARNING_RATE':os.environ['learningRate'],
+    'EPOCHS': int(os.environ['epoch']),
+    'LEARNING_RATE':float(os.environ['learningRate']),
     'SEED':42
 }
 
