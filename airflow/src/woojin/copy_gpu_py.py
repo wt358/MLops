@@ -1174,10 +1174,11 @@ def kd_teacher():
     print(device)
     
     HYP = {
-        'EPOCHS': 2,
-        'LEARNING_RATE':1e-2,
+        'EPOCHS': int(os.environ['epoch']),
+        'LEARNING_RATE':int(os.environ['learningRate']),
         'SEED':42
     }
+    
     
     factory=os.environ['FACT_NAME']
     host = os.environ['MONGO_URL_SECRET'] 
@@ -1267,8 +1268,8 @@ def kd_student():
     print(device)
     
     HYP = {
-        'EPOCHS': 2,
-        'LEARNING_RATE':1e-2,
+        'EPOCHS': int(os.environ['epoch']),
+        'LEARNING_RATE':int(os.environ['learningRate']),
         'SEED':42
     }
     

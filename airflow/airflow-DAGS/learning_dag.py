@@ -98,6 +98,7 @@ secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
 secret_allb = Secret('env', None, 'default-token-8d2dz')
 secret_newseogwang = Secret('env', None, 'newseogwang-db-secret-d64ch8k9gf')
 secret_teng= Secret('env', None, 'teng-db-secret-hk8b2hk77m')
+secret_hyperpara= Secret('env', None, 'hyper-para-secret')
 
 
 gpu_aff={
@@ -376,7 +377,7 @@ for i in molding_brand_name:
                 arguments=["command.sh",i, "iqr"],
                 affinity=gpu_aff,
                 #resources=pod_resources,
-                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb, secret_hyperpara ],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 #env_vars={'MONGO_URL_SECRET':'{{var.value.MONGO_URL_SECRET}}'},
                 #configmaps=configmaps,
@@ -398,7 +399,7 @@ for i in molding_brand_name:
                 arguments=["command.sh",i, "lstm"],
                 affinity=gpu_aff,
                 #resources=pod_resources,
-                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb , secret_hyperpara],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 #configmaps=configmaps,
@@ -419,7 +420,7 @@ for i in molding_brand_name:
                 arguments=["command.sh",i, "kd_teacher"],
                 affinity=gpu_aff,
                 #resources=pod_resources,
-                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb, secret_hyperpara ],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 #configmaps=configmaps,
@@ -440,7 +441,7 @@ for i in molding_brand_name:
                 arguments=["command.sh",i, "kd_student"],
                 affinity=gpu_aff,
                 #resources=pod_resources,
-                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb, secret_hyperpara ],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 #configmaps=configmaps,
@@ -461,7 +462,7 @@ for i in molding_brand_name:
                 arguments=["command.sh",i, "kd_download"],
                 affinity=cpu_aff,
                 #resources=pod_resources,
-                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb, secret_hyperpara ],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 #configmaps=configmaps,
@@ -482,7 +483,7 @@ for i in molding_brand_name:
                 arguments=["command.sh",i, "tad_gan"],
                 affinity=gpu_aff,
                 #resources=pod_resources,
-                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb, secret_hyperpara ],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 #env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 #configmaps=configmaps,
@@ -498,7 +499,7 @@ for i in molding_brand_name:
                 image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
                 #image_pull_policy="Always",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb, secret_hyperpara ],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 cmds=["sh" ],
                 arguments=["command.sh",i,"oc_svm"],

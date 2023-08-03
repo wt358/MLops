@@ -22,8 +22,8 @@ import warnings
 warnings.filterwarnings(action='ignore')
 
 HYP = {
-    'EPOCHS': 2,
-    'LEARNING_RATE':1e-2,
+    'EPOCHS': int(os.environ['epoch']),
+    'LEARNING_RATE':int(os.environ['learningRate']),
     'SEED':42
 }
 
@@ -124,8 +124,8 @@ def validation_teacher(model, val_loader, criterion):
 def train(model, optimizer, train_loader, val_loader, scheduler):
     criterion = nn.L1Loss()
 
-
-    for epoch in range(HYP["EPOCHS"]):  
+    epochs=int(os.environ['epoch'])
+    for epoch in range(epochs):  
         train_mae = []
   
         model.train()
@@ -191,8 +191,9 @@ def validation_student(s_model, t_model, val_loader, criterion):
 
 
 def student_train(s_model, t_model, optimizer, train_loader, val_loader, scheduler):
-
-    for epoch in range(HYP["EPOCHS"]):
+    
+    epochs=int(os.environ['epoch'])
+    for epoch in range(epochs):
         train_loss = []
         val_loss = []
         
