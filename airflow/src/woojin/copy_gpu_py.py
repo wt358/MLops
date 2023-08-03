@@ -1174,8 +1174,8 @@ def kd_teacher():
     print(device)
     
     HYP = {
-        'EPOCHS': int(os.environ['epoch']),
-        'LEARNING_RATE':int(os.environ['learningRate']),
+        'EPOCHS': os.environ['epoch'],
+        'LEARNING_RATE':os.environ['learningRate'],
         'SEED':42
     }
     
@@ -1268,8 +1268,8 @@ def kd_student():
     print(device)
     
     HYP = {
-        'EPOCHS': int(os.environ['epoch']),
-        'LEARNING_RATE':int(os.environ['learningRate']),
+        'EPOCHS': os.environ['epoch'],
+        'LEARNING_RATE':os.environ['learningRate'],
         'SEED':42
     }
     
