@@ -415,16 +415,16 @@ def pull_transform_woojin(**kwargs):
 
         db_test = client['etl_data']
         collection_etl=db_test[f'etl_{factory}']
-        collection_etl.create_index([("TimeStamp",ASCENDING),
-                                     ("Additional_Info_1",TEXT),
-                                       ("Machine_Name",TEXT),
-                                       ("Filling_Time",ASCENDING),
-                                       ("Injection_Time",ASCENDING),
-                                       ("Barrel_Temperature_1",ASCENDING),
-                                       ("Max_Injection_Speed",ASCENDING),
-                                       ("Cushion_Position",ASCENDING),
-                                       ("Plasticizing_Time",ASCENDING),
-                                     ],unique=True)
+        # collection_etl.create_index([("TimeStamp",ASCENDING),
+        #                              ("Additional_Info_1",TEXT),
+        #                                ("Machine_Name",TEXT),
+        #                                ("Filling_Time",ASCENDING),
+        #                                ("Injection_Time",ASCENDING),
+        #                                ("Barrel_Temperature_1",ASCENDING),
+        #                                ("Max_Injection_Speed",ASCENDING),
+        #                                ("Cushion_Position",ASCENDING),
+        #                                ("Plasticizing_Time",ASCENDING),
+        #                              ],unique=True)
         data=df.to_dict('records')
         try:
             result = collection_etl.insert_many(data,ordered=False)
