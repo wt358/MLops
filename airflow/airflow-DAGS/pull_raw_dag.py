@@ -373,7 +373,8 @@ def pull_transform_woojin(**kwargs):
                 }
         try:
             df = pd.DataFrame(list(collection_test1.find(query)))
-        except Exception as e: 
+        except Exception as e:
+            print(e) 
             print("mongo connection failed")
         
         if df.empty:
