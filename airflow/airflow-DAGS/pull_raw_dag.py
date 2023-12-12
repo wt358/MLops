@@ -376,10 +376,10 @@ def pull_transform_woojin(**kwargs):
         except Exception as e: 
             print("mongo connection failed")
         
-        print(df)
         if df.empty:
             print("empty")
             return
+        print(df)
         df.drop(columns={'_id'},inplace=True)
         client.close()
         # df=df.drop_duplicates(subset=["idx"])
