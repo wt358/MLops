@@ -500,7 +500,8 @@ with DAG(
                 retries=3,
                 retry_delay=timedelta(minutes=1), 
             )
-            dummy1 >> [t1,t2] >> dummy2
+            # dummy1 >> [t1,t2] >> dummy2
+            dummy1 >> t2 >> dummy2
         else:
             dummy1 >> t1>> dummy2
             
