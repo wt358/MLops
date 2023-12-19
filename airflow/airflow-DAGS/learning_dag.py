@@ -517,7 +517,7 @@ for i in molding_brand_name:
                 image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
                 #image_pull_policy="Always",
                 image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
-                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb ],
+                secrets=[eval('secret_'+j),secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb, secret_hyperpara ],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 cmds=["sh" ],
                 arguments=["command.sh",i,"eval"],
