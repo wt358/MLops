@@ -166,7 +166,7 @@ def iqr_mds_gan():
     print(df.columns)
     print(df)
 
-    df=df[df['Additional_Info_1'].str.contains("9000a")]
+    # df=df[df['Additional_Info_1'].str.contains("9000a")]
     df.drop(columns={'_id',
         },inplace=True)
 
@@ -1201,7 +1201,8 @@ def kd_teacher():
         print("mongo connection failed", e)
 
     
-    info_9000a = mold[(mold['Additional_Info_1']=='9000a 09520')]
+    # info_9000a = mold[(mold['Additional_Info_1']=='9000a 09520')]
+    info_9000a = mold
     info_9000a = info_9000a.reset_index(drop=True)
     print(info_9000a)
         # 8:2의 비율로 train, test set 나누기
@@ -1294,7 +1295,8 @@ def kd_student():
         print("mongo connection failed", e)
 
     
-    info_9000a = mold[(mold['Additional_Info_1']=='9000a 09520')]
+    # info_9000a = mold[(mold['Additional_Info_1']=='9000a 09520')]
+    info_9000a = mold
     info_9000a = info_9000a.reset_index(drop=True)
     print(info_9000a)
         # 8:2의 비율로 train, test set 나누기
