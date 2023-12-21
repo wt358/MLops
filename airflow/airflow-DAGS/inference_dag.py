@@ -82,6 +82,7 @@ secret_all8 = Secret('env', None, 'airflow-cluster-webserver-config')
 secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
 secret_allb = Secret('env', None, 'default-token-8d2dz')
 secret_newseogwang = Secret('env', None, 'newseogwang-db-secret-d64ch8k9gf')
+secret_hyperpara= Secret('env', None, 'hyper-para-secret')
 secret_teng= Secret('env', None, 'teng-db-secret-hk8b2hk77m')
 
 
@@ -475,7 +476,7 @@ with DAG(
             affinity=gpu_aff,
             # resources=pod_resources,
             secrets=[secret_all, secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
-                        secret_all6, secret_all7, secret_all8, secret_alla, secret_allb],
+                        secret_all6, secret_all7, secret_all8, secret_alla, secret_allb,secret_hyperpara],
             env_vars={'EXECUTION_DATE':"{{ds}}"},
             # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
             # configmaps=configmaps,
@@ -542,7 +543,7 @@ with DAG(
                 affinity=gpu_aff,
                 # resources=pod_resources,
                 secrets=[eval('secret_'+j), secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
-                        secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb],
+                        secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb,secret_hyperpara],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 # configmaps=configmaps,
@@ -565,7 +566,7 @@ with DAG(
                 affinity=cpu_aff,
                 # resources=pod_resources,
                 secrets=[eval('secret_'+j), secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
-                        secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb],
+                        secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb,secret_hyperpara],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 # configmaps=configmaps,
@@ -588,7 +589,7 @@ with DAG(
                 affinity=cpu_aff,
                 # resources=pod_resources,
                 secrets=[eval('secret_'+j), secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
-                        secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb],
+                        secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb,secret_hyperpara],
                 env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
                 # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
                 # configmaps=configmaps,
