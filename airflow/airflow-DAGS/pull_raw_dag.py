@@ -430,6 +430,7 @@ def pull_transform_woojin(**kwargs):
                                         ("Cushion_Position",ASCENDING),
                                         ("Plasticizing_Time",ASCENDING),
                                         ],unique=True)
+            print(df[i*10000:(i+1)*10000])
             data=df[i*10000:(i+1)*10000].to_dict('records')
             try:
                 result = collection_etl.insert_many(data,ordered=False)
