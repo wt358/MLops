@@ -210,8 +210,8 @@ def pull_mssql_woojin(**kwargs):
         #         #outcsv.writerow(r)
 
         print("query result length: " + str(len(list(sql_result_pd))))
-        ind=100000
-        df=df[ind:ind+10000]
+        ind=110000
+        df=df[ind:]
         print(df['TimeStamp'])
         data=df.to_dict('records')
         host_mongo = Variable.get("WOOJIN_MONGO_URL_SECRET")
