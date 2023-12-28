@@ -414,30 +414,28 @@ def pull_transform_woojin(**kwargs):
         '''
         
         host = Variable.get("WOOJIN_MONGO_URL_SECRET")
-        for i in range(0,10):
 
-            client = MongoClient(host)
+        client = MongoClient(host)
 
-            db_test = client['etl_data']
-            collection_etl=db_test[f'etl_{factory}']
-            collection_etl.create_index([("TimeStamp",ASCENDING),
-                                        ("Additional_Info_1",TEXT),
-                                        ("Machine_Name",TEXT),
-                                        ("Filling_Time",ASCENDING),
-                                        ("Injection_Time",ASCENDING),
-                                        ("Barrel_Temperature_1",ASCENDING),
-                                        ("Max_Injection_Speed",ASCENDING),
-                                        ("Cushion_Position",ASCENDING),
-                                        ("Plasticizing_Time",ASCENDING),
-                                        ],unique=True)
-            print(df[i*10000:(i+1)*10000])
-            data=df[i*10000:(i+1)*10000].to_dict('records')
-            try:
-                result = collection_etl.insert_many(data,ordered=False)
-            except Exception as e: 
-                print("mongo connection failed")
-                print(e)
-            client.close()
+        db_test = client['etl_data']
+        collection_etl=db_test[f'etl_{factory}']
+        collection_etl.create_index([("TimeStamp",ASCENDING),
+                                    ("Additional_Info_1",TEXT),
+                                    ("Machine_Name",TEXT),
+                                    ("Filling_Time",ASCENDING),
+                                    ("Injection_Time",ASCENDING),
+                                    ("Barrel_Temperature_1",ASCENDING),
+                                    ("Max_Injection_Speed",ASCENDING),
+                                    ("Cushion_Position",ASCENDING),
+                                    ("Plasticizing_Time",ASCENDING),
+                                    ],unique=True)
+        data=df.to_dict('records')
+        try:
+            result = collection_etl.insert_many(data,ordered=False)
+        except Exception as e: 
+            print("mongo connection failed")
+            print(e)
+        client.close()
     print("hello")
 
 

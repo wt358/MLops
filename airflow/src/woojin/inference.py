@@ -306,7 +306,7 @@ def infer_lstm():
     #     message = message.value
     #     l.append(loads(message['payload'])['fullDocument'])
     # df = pd.DataFrame(l)
-    start=now-timedelta(days=4)
+    start=now-timedelta(days=120)
     query={
             'TimeStamp':{
                 '$gt':start,
@@ -328,7 +328,7 @@ def infer_lstm():
     now=now.astimezone()
     print(now)
     start_time=(now-timedelta(minutes=30)).astimezone()
-    start_time=(now-timedelta(days=4)).astimezone()
+    start_time=(now-timedelta(days=120)).astimezone()
     print(start_time)
     df=df[df['TimeStamp']>=start_time]
     print(df.shape)
@@ -447,18 +447,20 @@ def infer_lstm():
 
 
     print(y_test)
+    for i in range(0,10):
+        client=MongoClient(host)
+        db_test = client['result_log']
+        collection = db_test[f'log_{model_name}_{factory}']
+        collection.create_index([("TimeStamp",pymongo.ASCENDING)],unique=True)
+        print(scored[i*10000:(i+1)*10000])
+        data=scored[i*10000:(i+1)*10000].to_dict('records')
+        # data=X_pred.to_dict('records')
 
-    db_test = client['result_log']
-    collection = db_test[f'log_{model_name}_{factory}']
-    collection.create_index([("TimeStamp",pymongo.ASCENDING)],unique=True)
-    data=scored.to_dict('records')
-    # data=X_pred.to_dict('records')
-
-    try:
-        collection.insert_many(data,ordered=False)
-    except Exception as e:
-        print("mongo connection failer",e)
-
+        try:
+            collection.insert_many(data,ordered=False)
+        except Exception as e:
+            print("mongo connection failer",e)
+        client.close()
     print("hello inference lstm ae")
     
     
