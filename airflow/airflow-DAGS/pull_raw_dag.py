@@ -171,7 +171,7 @@ def pull_mssql_woojin(**kwargs):
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
-        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(DAY,-120,GETDATE())")
+        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(DAY,-4,GETDATE())")
         # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
         #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
         # MSSQL 접속
@@ -210,8 +210,6 @@ def pull_mssql_woojin(**kwargs):
         #         #outcsv.writerow(r)
 
         print("query result length: " + str(len(list(sql_result_pd))))
-        ind=110000
-        df=df[ind:]
         print(df['TimeStamp'])
         data=df.to_dict('records')
         host_mongo = Variable.get("WOOJIN_MONGO_URL_SECRET")
@@ -414,28 +412,32 @@ def pull_transform_woojin(**kwargs):
         print(moldset_labeled_9000R.head())
         print(len(moldset_labeled_9000R))
         '''
+        
         host = Variable.get("WOOJIN_MONGO_URL_SECRET")
-        client = MongoClient(host)
+        for i in range(0,10):
 
-        db_test = client['etl_data']
-        collection_etl=db_test[f'etl_{factory}']
-        collection_etl.create_index([("TimeStamp",ASCENDING),
-                                     ("Additional_Info_1",TEXT),
-                                       ("Machine_Name",TEXT),
-                                       ("Filling_Time",ASCENDING),
-                                       ("Injection_Time",ASCENDING),
-                                       ("Barrel_Temperature_1",ASCENDING),
-                                       ("Max_Injection_Speed",ASCENDING),
-                                       ("Cushion_Position",ASCENDING),
-                                       ("Plasticizing_Time",ASCENDING),
-                                     ],unique=True)
-        data=df.to_dict('records')
-        try:
-            result = collection_etl.insert_many(data,ordered=False)
-        except Exception as e: 
-            print("mongo connection failed")
-            print(e)
-        client.close()
+            client = MongoClient(host)
+
+            db_test = client['etl_data']
+            collection_etl=db_test[f'etl_{factory}']
+            collection_etl.create_index([("TimeStamp",ASCENDING),
+                                        ("Additional_Info_1",TEXT),
+                                        ("Machine_Name",TEXT),
+                                        ("Filling_Time",ASCENDING),
+                                        ("Injection_Time",ASCENDING),
+                                        ("Barrel_Temperature_1",ASCENDING),
+                                        ("Max_Injection_Speed",ASCENDING),
+                                        ("Cushion_Position",ASCENDING),
+                                        ("Plasticizing_Time",ASCENDING),
+                                        ],unique=True)
+            df=df[i*10000:(i+1)*10000]
+            data=df.to_dict('records')
+            try:
+                result = collection_etl.insert_many(data,ordered=False)
+            except Exception as e: 
+                print("mongo connection failed")
+                print(e)
+            client.close()
     print("hello")
 
 
