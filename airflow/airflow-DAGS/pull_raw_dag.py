@@ -171,7 +171,7 @@ def pull_mssql_woojin(**kwargs):
     factorys=eval(brand_name + "_factory_name")
     print(factorys)
     for factory in factorys:
-        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(DAY,-180,GETDATE())")
+        query = text("SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(DAY,-120,GETDATE())")
         # "SELECT * from shot_data WITH(NOLOCK) where TimeStamp > DATEADD(MONTH,-1,GETDATE())"
         #한시간 단위로 pull -> "SELECT *,DATEADD(MI,-60,GETDATE()) from shot_data WITH(NOLOCK)"
         # MSSQL 접속
@@ -366,7 +366,7 @@ def pull_transform_woojin(**kwargs):
         db_test = client['raw_data']
         collection_test1 = db_test[f'{factory}_mold_data']
         now = datetime.now()
-        start = now - timedelta(days=180)
+        start = now - timedelta(days=120)
         print(start)
         query={
                 'TimeStamp':{
