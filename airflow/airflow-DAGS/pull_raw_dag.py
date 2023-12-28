@@ -210,7 +210,7 @@ def pull_mssql_woojin(**kwargs):
         #         #outcsv.writerow(r)
 
         print("query result length: " + str(len(list(sql_result_pd))))
-        ind=80000
+        ind=90000
         df=df[ind:ind+10000]
         print(df['TimeStamp'])
         data=df.to_dict('records')
