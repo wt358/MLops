@@ -25,6 +25,7 @@ from loadmodel import *
 from data_evaluation import *
 from inference import *
 from knowledge_distillation import *
+from send_redis import *
 import params
 
 

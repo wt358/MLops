@@ -15,7 +15,7 @@ def send_data():
     mssql_password = "c@llme601gh#"
 
     # Redis 연결 정보
-    redis_host = ""
+    redis_host = "redis-my-redis-0d888-19180359-0042b61a74ce.kr.lb.naverncp.com"
     redis_port = 6379
     redis_db = 0
     redis_pw = 1213
