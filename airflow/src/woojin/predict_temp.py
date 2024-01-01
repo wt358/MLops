@@ -27,7 +27,7 @@ def getTemperature(redis_port=6379,redis_db=0):
     return result
 
 
-if __name__ == "__main__":
+def predict_temperature():
     send_data()
     df = getTemperature()
 
