@@ -19,6 +19,7 @@ import tensorflow as tf
 from preprocess import *
 from loadmodel import *
 from logger import *
+from predict_temp import *
 from sklearn.svm import OneClassSVM 
 import params
 
@@ -246,8 +247,9 @@ def infer_main():
     logging.info('- Root directory: {}'.format(os.path.abspath(os.curdir)))
     logging.info('Parameters')
 
-
+    predict_temperature()
     infer_lstm()
+    
     print("hello inference the main products")
 
 def infer_lstm():
@@ -306,8 +308,8 @@ def infer_lstm():
     #     message = message.value
     #     l.append(loads(message['payload'])['fullDocument'])
     # df = pd.DataFrame(l)
-    start=now-timedelta(days=120)
-    start1=now-timedelta(days=110)
+    start=now-timedelta(days=110)
+    start1=now-timedelta(days=100)
     query={
             'TimeStamp':{
                 '$gt':start,
@@ -329,7 +331,7 @@ def infer_lstm():
     now=now.astimezone()
     print(now)
     start_time=(now-timedelta(minutes=30)).astimezone()
-    start_time=(now-timedelta(days=120)).astimezone()
+    start_time=(now-timedelta(days=110)).astimezone()
     print(start_time)
     df=df[df['TimeStamp']>=start_time]
     print(df.shape)
