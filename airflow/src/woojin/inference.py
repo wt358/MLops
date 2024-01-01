@@ -329,7 +329,7 @@ def infer_lstm():
     now=now.astimezone()
     print(now)
     start_time=(now-timedelta(minutes=30)).astimezone()
-    start_time=(now-timedelta(days=120)).astimezone()
+    start_time=(now-timedelta(days=130)).astimezone()
     print(start_time)
     df=df[df['TimeStamp']>=start_time]
     print(df.shape)
