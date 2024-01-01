@@ -391,12 +391,14 @@ def which_path_woojin(**kwargs):
     
     sql_result_pd = pd.read_sql_query(query, engine)
     print(sql_result_pd)
+    engine.dispose()
+    if sql_result_pd.empty:
+        return 'path_main_'+factory
     mode_machine_name=sql_result_pd['Additional_Info_1'].value_counts().idxmax()
     print(sql_result_pd['Additional_Info_1'].value_counts())
     print(sql_result_pd)
     print(mode_machine_name)
     
-    engine.dispose()
     # if '9000a' in mode_machine_name:
     if True:
         task_id = 'path_main'
