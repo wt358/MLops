@@ -431,6 +431,7 @@ def pull_transform_woojin(**kwargs):
                                         ("Plasticizing_Time",ASCENDING),
                                         ],unique=True)
             data=df[i*10000:(i+1)*10000].to_dict('records')
+            print(df[i*10000:(i+1)*10000]['TimeStamp'])
             try:
                 result = collection_etl.insert_many(data,ordered=False)
             except Exception as e: 
