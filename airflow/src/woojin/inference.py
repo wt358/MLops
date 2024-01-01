@@ -306,11 +306,12 @@ def infer_lstm():
     #     message = message.value
     #     l.append(loads(message['payload'])['fullDocument'])
     # df = pd.DataFrame(l)
-    start=now-timedelta(days=120)
+    start=now-timedelta(days=130)
+    start1=now-timedelta(days=90)
     query={
             'TimeStamp':{
                 '$gt':start,
-                '$lt':now
+                '$lt':start1
                 }
             }
     try:
