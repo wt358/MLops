@@ -306,8 +306,8 @@ def infer_lstm():
     #     message = message.value
     #     l.append(loads(message['payload'])['fullDocument'])
     # df = pd.DataFrame(l)
-    start=now-timedelta(days=130)
-    start1=now-timedelta(days=120)
+    start=now-timedelta(days=120)
+    start1=now-timedelta(days=110)
     query={
             'TimeStamp':{
                 '$gt':start,
@@ -329,7 +329,7 @@ def infer_lstm():
     now=now.astimezone()
     print(now)
     start_time=(now-timedelta(minutes=30)).astimezone()
-    start_time=(now-timedelta(days=130)).astimezone()
+    start_time=(now-timedelta(days=120)).astimezone()
     print(start_time)
     df=df[df['TimeStamp']>=start_time]
     print(df.shape)
