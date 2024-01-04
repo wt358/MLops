@@ -308,162 +308,161 @@ def infer_lstm():
     #     message = message.value
     #     l.append(loads(message['payload'])['fullDocument'])
     # df = pd.DataFrame(l)
-    for i in range(0,11):
-        num=i*10
-        start=now-timedelta(days=num+10)
-        start1=now-timedelta(days=num)
-        query={
-                'TimeStamp':{
-                    '$gt':start,
-                    '$lt':start1
-                    }
+    start=now-timedelta(days=4)
+    # start1=now-timedelta(days=num)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                # '$lt':start1
+                '$lt': now
                 }
-        try:
-            df = pd.DataFrame(list(collection_etl.find(query)))
-        except Exception as e:
-            print("mongo connection failed", e)
+            }
+    try:
+        df = pd.DataFrame(list(collection_etl.find(query)))
+    except Exception as e:
+        print("mongo connection failed", e)
 
-        print(df)
-        if df.empty:
-            print("empty queue")
-            return
-        # dataframe transform
-        df=df[df['idx']!='idx']
-        df['TimeStamp']=pd.to_datetime(df['TimeStamp'],utc=True)
-        now=now.astimezone()
-        print(now)
-        start_time=(now-timedelta(minutes=30)).astimezone()
-        start_time=(now-timedelta(days=num+10)).astimezone()
-        print(start_time)
-        df=df[df['TimeStamp']>=start_time]
-        print(df.shape)
-        print(df.columns)
-        print(df)
-        if df.empty:
-            print("empty df")
-            return 1
+    print(df)
+    if df.empty:
+        print("empty queue")
+        return
+    # dataframe transform
+    df=df[df['idx']!='idx']
+    df['TimeStamp']=pd.to_datetime(df['TimeStamp'],utc=True)
+    now=now.astimezone()
+    print(now)
+    start_time=(now-timedelta(minutes=30)).astimezone()
+    start_time=(now-timedelta(days=4)).astimezone()
+    print(start_time)
+    df=df[df['TimeStamp']>=start_time]
+    print(df.shape)
+    print(df.columns)
+    print(df)
+    if df.empty:
+        print("empty df")
+        return 1
 
-        df.drop(columns={'_id',
-            },inplace=True)
-        
-        print(df)
+    df.drop(columns={'_id',
+        },inplace=True)
+    
+    print(df)
 
-        
-        labled = pd.DataFrame(df, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position'])
-
-
-        labled.columns = map(str.lower,labled.columns)
-
-        print(labled.head())
-
-        X_test = labled.sample(frac=1)
-        test = X_test 
-        X_test=X_test.values
-        print(f"""Shape of the datasets:
-            Testing  (rows, cols) = {X_test.shape}""")
-        
-        host = os.environ['MONGO_URL_SECRET'] 
-        client = MongoClient(host)
-        db_model = client['model_var']
-        fs = gridfs.GridFS(db_model)
-        collection_model=db_model[f'scaler_lstm_{factory}']
-        
-        model_name = 'scaler_data'
-        model_fpath = f'{model_name}.joblib'
-        result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
-        print(result)
-        if len(list(result.clone()))==0:
-            print("empty")
-            scaler = MinMaxScaler()
-        else:
-            print("not empty")
-            file_id = str(result[0]['file_id'])
-            scaler = LoadModel(mongo_id=file_id).clf
-        
-        # transforming data from the time domain to the frequency domain using fast Fourier transform
-        test_fft = np.fft.fft(X_test)
-        
-        X_test = scaler.transform(X_test)# 나중에 scaler도 pull raw 2 aug에서 모델을 저장해서 놓고 여기서는 그 모델을 불러와서 transform(X_test)만 해야함.
-        scaler_filename = "scaler_data"
-        joblib.dump(scaler, scaler_filename)
-
-        X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
-        print("Test data shape:", X_test.shape)
-        #model load    
-        
-        model_name = 'LSTM_autoencoder'
-        collection_model=db_model[f'{model_name}_{factory}']
-        
-        model_fpath = f'{model_name}.joblib'
-        result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
-        
-        print(result)
-        if len(list(result.clone()))==0:
-            print("empty")
-            return 1
-        else:
-            print("not empty")
-            file_id = str(result[0]['file_id'])
-            model = LoadModel(mongo_id=file_id).clf
-
-        joblib.dump(model, model_fpath)
-        
-        model.compile(optimizer='adam', loss='mae')
-        
-        # 이상값은 -1으로 나타낸다.
-        print(model.summary())
+    
+    labled = pd.DataFrame(df, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position'])
 
 
-        X_pred = model.predict(X_test)
-        X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
-        X_pred = pd.DataFrame(X_pred, columns=test.columns)
-        X_pred.index = test.index
-        
-        scored = pd.DataFrame(index=test.index)
-        Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
-        scored['TimeStamp']=pd.to_datetime(df['TimeStamp'])
-        scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
-        loss_list=np.abs(X_pred-Xtest)
-        print(loss_list)
-        mean=np.mean(loss_list,axis=0)
-        std=np.cov(loss_list.T)
-        print(mean)
-        print(std)
-        x=loss_list-mean
-        print(x)
+    labled.columns = map(str.lower,labled.columns)
 
-        new_df=np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1).reshape(-1,1)
-        scaler_minmax=StandardScaler()
-        scaler_minmax.fit(new_df)
-        data_scaler1=np.abs(scaler_minmax.transform(new_df))
-        scaler_minmax=MinMaxScaler()
-        scaler_minmax.fit(new_df)
-        data_scaler2=scaler_minmax.transform(new_df)
+    print(labled.head())
 
-        # print(data_scaler)
-        scored['Anomaly_Score_standard']=data_scaler1
-        scored['Anomaly_Score_minmax']=data_scaler2
-        scored['Threshold'] = 0.1
-        scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
-        print(scored.head())
+    X_test = labled.sample(frac=1)
+    test = X_test 
+    X_test=X_test.values
+    print(f"""Shape of the datasets:
+        Testing  (rows, cols) = {X_test.shape}""")
+    
+    host = os.environ['MONGO_URL_SECRET'] 
+    client = MongoClient(host)
+    db_model = client['model_var']
+    fs = gridfs.GridFS(db_model)
+    collection_model=db_model[f'scaler_lstm_{factory}']
+    
+    model_name = 'scaler_data'
+    model_fpath = f'{model_name}.joblib'
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+    print(result)
+    if len(list(result.clone()))==0:
+        print("empty")
+        scaler = MinMaxScaler()
+    else:
+        print("not empty")
+        file_id = str(result[0]['file_id'])
+        scaler = LoadModel(mongo_id=file_id).clf
+    
+    # transforming data from the time domain to the frequency domain using fast Fourier transform
+    test_fft = np.fft.fft(X_test)
+    
+    X_test = scaler.transform(X_test)# 나중에 scaler도 pull raw 2 aug에서 모델을 저장해서 놓고 여기서는 그 모델을 불러와서 transform(X_test)만 해야함.
+    scaler_filename = "scaler_data"
+    joblib.dump(scaler, scaler_filename)
 
-        y_test = scored['Anomaly']
-        print(y_test.unique())
+    X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
+    print("Test data shape:", X_test.shape)
+    #model load    
+    
+    model_name = 'LSTM_autoencoder'
+    collection_model=db_model[f'{model_name}_{factory}']
+    
+    model_fpath = f'{model_name}.joblib'
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+    
+    print(result)
+    if len(list(result.clone()))==0:
+        print("empty")
+        return 1
+    else:
+        print("not empty")
+        file_id = str(result[0]['file_id'])
+        model = LoadModel(mongo_id=file_id).clf
+
+    joblib.dump(model, model_fpath)
+    
+    model.compile(optimizer='adam', loss='mae')
+    
+    # 이상값은 -1으로 나타낸다.
+    print(model.summary())
 
 
-        print(y_test)
-        client=MongoClient(host)
-        db_test = client['result_log']
-        collection = db_test[f'log_{model_name}_{factory}']
-        collection.create_index([("TimeStamp",pymongo.ASCENDING)],unique=True)
-        data=scored.to_dict('records')
-        # data=X_pred.to_dict('records')
+    X_pred = model.predict(X_test)
+    X_pred = X_pred.reshape(X_pred.shape[0], X_pred.shape[2])
+    X_pred = pd.DataFrame(X_pred, columns=test.columns)
+    X_pred.index = test.index
+    
+    scored = pd.DataFrame(index=test.index)
+    Xtest = X_test.reshape(X_test.shape[0], X_test.shape[2])
+    scored['TimeStamp']=pd.to_datetime(df['TimeStamp'])
+    scored['Loss_mae'] = np.mean(np.abs(X_pred-Xtest), axis = 1)
+    loss_list=np.abs(X_pred-Xtest)
+    print(loss_list)
+    mean=np.mean(loss_list,axis=0)
+    std=np.cov(loss_list.T)
+    print(mean)
+    print(std)
+    x=loss_list-mean
+    print(x)
 
-        try:
-            collection.insert_many(data,ordered=False)
-        except Exception as e:
-            print("mongo connection failer",e)
-        client.close()
+    new_df=np.mean(np.abs(np.dot(np.dot(x,std),x.T)),axis=1).reshape(-1,1)
+    scaler_minmax=StandardScaler()
+    scaler_minmax.fit(new_df)
+    data_scaler1=np.abs(scaler_minmax.transform(new_df))
+    scaler_minmax=MinMaxScaler()
+    scaler_minmax.fit(new_df)
+    data_scaler2=scaler_minmax.transform(new_df)
+
+    # print(data_scaler)
+    scored['Anomaly_Score_standard']=data_scaler1
+    scored['Anomaly_Score_minmax']=data_scaler2
+    scored['Threshold'] = 0.1
+    scored['Anomaly'] = scored['Loss_mae'] > scored['Threshold']
+    print(scored.head())
+
+    y_test = scored['Anomaly']
+    print(y_test.unique())
+
+
+    print(y_test)
+    client=MongoClient(host)
+    db_test = client['result_log']
+    collection = db_test[f'log_{model_name}_{factory}']
+    collection.create_index([("TimeStamp",pymongo.ASCENDING)],unique=True)
+    data=scored.to_dict('records')
+    # data=X_pred.to_dict('records')
+
+    try:
+        collection.insert_many(data,ordered=False)
+    except Exception as e:
+        print("mongo connection failer",e)
+    client.close()
     print("hello inference lstm ae")
     
     
