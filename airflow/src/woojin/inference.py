@@ -331,7 +331,8 @@ def infer_student():
 
     test_loader = DataLoader(final_datasets, shuffle= False)
     
-    print(test_loader,test_time)
+    print(test_loader)
+    print(test_time)
     start_time = time.time()
 
     result = inference(student_model, teacher_model, test_loader,test_time)
