@@ -578,6 +578,30 @@ with DAG(
                 startup_timeout_seconds=600,
                 retries=3,
             )
+
+            infer_student= KubernetesPodOperator(
+                task_id="main_infer_student_pod_operator_"+j,
+                name="main-infer-student",
+                namespace='airflow-cluster',
+                image=f'ctf-mlops.kr.ncr.ntruss.com/cuda:{gpu_tag}',
+                # image_pull_policy="Always",
+                # image_pull_policy="IfNotPresent",
+                image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+                cmds=["sh"],
+                arguments=["command.sh",i, "infer_student"],
+                affinity=cpu_aff,
+                # resources=pod_resources,
+                secrets=[eval('secret_'+j), secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
+                        secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb,secret_hyperpara],
+                env_vars={'EXECUTION_DATE':"{{ds}}",'FACT_NAME':original_fact},
+                # env_vars={'MONGO_URL_SECRET':'/var/secrets/db/mongo-url-secret.json'},
+                # configmaps=configmaps,
+                is_delete_operator_pod=True,
+                get_logs=True,
+                startup_timeout_seconds=600,
+                retries=3,
+            )
+ 
             
             infer_vari= KubernetesPodOperator(
                 task_id="vari_infer_svm_pod_operator_"+j,
@@ -613,7 +637,7 @@ with DAG(
                 
                 if path == 'path_main':
                     # main_or_vari>>t>>infer_main 
-                    main_or_vari>>t>>[infer_main,infer_svm] >> t2 >> dummy_end
+                    main_or_vari>>t>>[infer_main,infer_svm, infer_student] >> t2 >> dummy_end
                     # main_or_vari>>t>>[infer_main,infer_svm] >> dummy_end
 
                 elif path == 'path_vari':

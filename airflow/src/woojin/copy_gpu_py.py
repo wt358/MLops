@@ -1402,6 +1402,9 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'infer_vari':
         print("entering inference vari product ")
         infer_ocsvm()
+    elif sys.argv[1] == 'infer_student':
+        print("entering inference student")
+        infer_student()
     elif sys.argv[1] == 'push_onpremise':
         print("entering push_onpremise")
         push_onpremise()
