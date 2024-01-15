@@ -246,8 +246,8 @@ def infer_student():
     host = os.environ['MONGO_URL_SECRET'] 
     client = MongoClient(host)
     print(factory)
-    db_test = client['etl_data']
-    collection_etl=db_test[f'etl_{factory}']
+    db_test = client['raw_data']
+    collection_etl=db_test[f'{factory}_mold_data']
     start=now-timedelta(days=4)
     query={
             'TimeStamp':{
@@ -277,25 +277,11 @@ def infer_student():
     print(df.columns)
     print(df)
 
-    df.drop(columns={'_id',
-        },inplace=True)
     
     print(df)
     if df.empty:
         print("empty")
         return 1
-    
-    labled = pd.DataFrame(df, columns = ['Filling_Time','Plasticizing_Time','Cycle_Time','Cushion_Position'])
-
-
-    labled.columns = map(str.lower,labled.columns)
-    labled.rename(columns={'class':'label'},inplace=True)
-    print(labled.head())
-
-    target_columns = pd.DataFrame(labled, columns = ['cycle_time', 'cushion_position'])
-    target_columns.astype('float')
-     
-     
     host = os.environ['MONGO_URL_SECRET'] 
     client=MongoClient(host)
     db_model = client['model_var']
@@ -337,6 +323,7 @@ def infer_student():
     
     # info_9000a = df[(df['Additional_Info_1']=='9000a 09520')]
     info_9000a = df
+    info_9000a = info_9000a.reset_index(drop=True)
     datasets = info_9000a
 
     test_datasets, test_time = preprocess(datasets)
