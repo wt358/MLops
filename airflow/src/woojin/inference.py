@@ -323,7 +323,7 @@ def infer_student():
     
     # info_9000a = df[(df['Additional_Info_1']=='9000a 09520')]
     info_9000a = df
-    info_9000a = info_9000a.reset_index(drop=True)
+    # info_9000a = info_9000a.reset_index(drop=True)
     datasets = info_9000a
 
     test_datasets, test_time = preprocess(datasets)
