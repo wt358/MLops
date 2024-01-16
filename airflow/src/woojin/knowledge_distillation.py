@@ -223,7 +223,7 @@ def inference(s_model, t_model, test_loader, timeStamp):
     s_model.eval()
     t_model.eval()
 
-    result = pd.DataFrame()
+    result = pd.DataFrame(columns=['TimeStamp','Loss MAE','Anomaly'])
     threshold = 0.1
     
     result['TimeStamp'] = timeStamp
