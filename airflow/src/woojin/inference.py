@@ -244,121 +244,117 @@ def infer_student():
     # consumer.close()
     factory=os.environ['FACT_NAME']
     host = os.environ['MONGO_URL_SECRET']
-    for i in range(30):
-        client = MongoClient(host)
-        print(factory)
-        db_test = client['raw_data']
-        collection_etl=db_test[f'{factory}_mold_data']
-        start=now-timedelta(days=4)
-        start=now-timedelta(days=i*10)
-        start1=now-timedelta(days=(i+1)*10)
-        query={
-                'TimeStamp':{
-                    '$gt':start1,
-                    '$lt':start
-                    }
+    client = MongoClient(host)
+    print(factory)
+    db_test = client['raw_data']
+    collection_etl=db_test[f'{factory}_mold_data']
+    start=now-timedelta(days=4)
+    query={
+            'TimeStamp':{
+                '$gt':start,
+                '$lt':now
                 }
-        try:
-            df = pd.DataFrame(list(collection_etl.find(query)))
-        except Exception as e:
-            print("mongo connection failed", e)
-        client.close()
-        print(df)
-        if df.empty:
-            print("empty queue")
-            return
-        # dataframe transform
-        df=df[df['idx']!='idx']
-        df['TimeStamp']=pd.to_datetime(df['TimeStamp'],utc=True)
-        now=now.astimezone()
-        print(now)
-        start_time=now-timedelta(minutes=30)
-        start_time=now-timedelta(days=4)
-        start_time=now-timedelta(days=(i+1)*10)
-        print(start_time)
-        df=df[df['TimeStamp']>=start_time]
-        print(df.shape)
-        print(df.columns)
-        print(df)
+            }
+    try:
+        df = pd.DataFrame(list(collection_etl.find(query)))
+    except Exception as e:
+        print("mongo connection failed", e)
+    client.close()
+    print(df)
+    if df.empty:
+        print("empty queue")
+        return
+    # dataframe transform
+    df=df[df['idx']!='idx']
+    df['TimeStamp']=pd.to_datetime(df['TimeStamp'],utc=True)
+    now=now.astimezone()
+    print(now)
+    start_time=now-timedelta(minutes=30)
+    start_time=now-timedelta(days=4)
+    print(start_time)
+    df=df[df['TimeStamp']>=start_time]
+    print(df.shape)
+    print(df.columns)
+    print(df)
 
-        
-        print(df)
-        if df.empty:
-            print("empty")
-            return 1
-        host = os.environ['MONGO_URL_SECRET'] 
-        client=MongoClient(host)
-        db_model = client['model_var']
-        fs = gridfs.GridFS(db_model)
-        collection_model=db_model[f'student_{factory}']
-        
-        model_name = 'student'
-        model_fpath = f'{model_name}.joblib'
-        result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
-        print(result)
-        # cnt=len(list(result.clone()))
-        # print(result[0])
-        # print(result[cnt-1])
-        try:
-            file_id = str(result[0]['file_id'])
-            student_model = LoadModel(mongo_id=file_id).clf
-        except Exception as e:
-            print("exception occured in student",e)
-            # model = OneClassSVM(kernel = 'rbf', gamma = 0.001, nu = 0.04).fit(target_columns)
-        joblib.dump(student_model, model_fpath)
-        
-        collection_model=db_model[f'teacher_{factory}']
-        
-        model_name = 'teacher'
-        model_fpath = f'{model_name}.joblib'
-        result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
-        print(result)
-        # cnt=len(list(result.clone()))
-        # print(result[0])
-        # print(result[cnt-1])
-        try:
-            file_id = str(result[0]['file_id'])
-            teacher_model = LoadModel(mongo_id=file_id).clf
-        except Exception as e:
-            print("exception occured in teacher",e)
-            # model = OneClassSVM(kernel = 'rbf', gamma = 0.001, nu = 0.04).fit(target_columns)
-        joblib.dump(teacher_model, model_fpath)
-        # print(model.get_params())
-        
-        # info_9000a = df[(df['Additional_Info_1']=='9000a 09520')]
-        info_9000a = df
-        # info_9000a = info_9000a.reset_index(drop=True)
-        datasets = info_9000a
+    
+    print(df)
+    if df.empty:
+        print("empty")
+        return 1
+    host = os.environ['MONGO_URL_SECRET'] 
+    client=MongoClient(host)
+    db_model = client['model_var']
+    fs = gridfs.GridFS(db_model)
+    collection_model=db_model[f'student_{factory}']
+    
+    model_name = 'student'
+    model_fpath = f'{model_name}.joblib'
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+    print(result)
+    # cnt=len(list(result.clone()))
+    # print(result[0])
+    # print(result[cnt-1])
+    try:
+        file_id = str(result[0]['file_id'])
+        student_model = LoadModel(mongo_id=file_id).clf
+    except Exception as e:
+        print("exception occured in student",e)
+        # model = OneClassSVM(kernel = 'rbf', gamma = 0.001, nu = 0.04).fit(target_columns)
+    joblib.dump(student_model, model_fpath)
+    
+    collection_model=db_model[f'teacher_{factory}']
+    
+    model_name = 'teacher'
+    model_fpath = f'{model_name}.joblib'
+    result = collection_model.find({"model_name": model_name}).sort([("inserted_time", -1)])
+    print(result)
+    # cnt=len(list(result.clone()))
+    # print(result[0])
+    # print(result[cnt-1])
+    try:
+        file_id = str(result[0]['file_id'])
+        teacher_model = LoadModel(mongo_id=file_id).clf
+    except Exception as e:
+        print("exception occured in teacher",e)
+        # model = OneClassSVM(kernel = 'rbf', gamma = 0.001, nu = 0.04).fit(target_columns)
+    joblib.dump(teacher_model, model_fpath)
+    # print(model.get_params())
+    
+    # info_9000a = df[(df['Additional_Info_1']=='9000a 09520')]
+    info_9000a = df
+    # info_9000a = info_9000a.reset_index(drop=True)
+    datasets = info_9000a
 
-        test_datasets, test_time = preprocess(datasets)
-        final_datasets = torch.tensor(test_datasets.values)
+    test_datasets, test_time = preprocess(datasets)
+    final_datasets = torch.tensor(test_datasets.values)
 
-        test_loader = DataLoader(final_datasets, shuffle= False)
-        
-        print(test_loader)
-        print(test_time)
-        start_time = time.time()
+    test_loader = DataLoader(final_datasets, shuffle= False)
+    
+    print(test_loader)
+    print(test_time)
+    start_time = time.time()
 
-        result = inference(student_model, teacher_model, test_loader,test_time)
+    result = inference(student_model, teacher_model, test_loader,test_time)
 
-        end_time = time.time()
+    end_time = time.time()
 
-        elapsed_time = end_time - start_time # 모델 학습 시간
-        result['time'] = elapsed_time
-        print(f"학습 시간: {elapsed_time}초")
-        print(result)
-        db_result=client['result_log']
-        collection_result = db_result['log_kd_NewSeoGwang']
-        collection_result.create_index([("TimeStamp",pymongo.ASCENDING)],unique=True)
-        data=result.to_dict('records')
-        try:
-            collection_result.insert_many(data,ordered=False)
-        except Exception as e:
-            print("Exception occured",e)
+    elapsed_time = end_time - start_time # 모델 학습 시간
+    result['time'] = elapsed_time
+    print(f"학습 시간: {elapsed_time}초")
+    print(result)
+    db_result=client['result_log']
+    collection_result = db_result['log_kd_NewSeoGwang']
+    collection_result.create_index([("TimeStamp",pymongo.ASCENDING)],unique=True)
+    data=result.to_dict('records')
+    try:
+        collection_result.insert_many(data,ordered=False)
+    except Exception as e:
+        print("Exception occured",e)
 
 
-        
-        client.close()
+    
+    client.close()
     print("hello oc_svm inference")
 
 
