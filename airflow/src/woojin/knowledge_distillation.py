@@ -244,7 +244,7 @@ def inference(s_model, t_model, test_loader, timeStamp):
             
             loss_list.append(loss_b.item())  
             
-    result['Loss MAE'] = loss_list  
+    result['Loss_mae'] = loss_list  
     
     anomaly_list = np.where(np.array(loss_list) > threshold, 1, 0)
     result['Anomaly'] =  anomaly_list
